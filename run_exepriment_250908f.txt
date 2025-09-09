@@ -1,0 +1,590 @@
+Running ENHANCED WikiText benchmarking...
+============================================================
+ENHANCED REVERSIBLE QWEN3 COMPREHENSIVE BENCHMARKS
+============================================================
+Loading WikiText dataset...
+Loaded WikiText: Train=1801350, Val=3760, Test=4358
+Creating WikiText tokenizer...
+Used 1154847 texts for tokenizer training
+Actual vocabulary size: 16000
+Creating WikiText datasets...
+Special tokens - pad: 1, unk: 0, bos: 2, eos: 3
+Processing 1028781 valid texts from 1801350 total texts...
+Created WikiText dataset with 2 sequences
+Special tokens - pad: 1, unk: 0, bos: 2, eos: 3
+Processing 2203 valid texts from 3760 total texts...
+Created WikiText dataset with 0 sequences
+WikiText loading failed: No valid sequences created! Check tokenization and sequence length.
+Falling back to synthetic data...
+Setting up models...
+Created reversible_standard model (254,556,672 params)
+Created non_reversible_standard model (254,556,672 params)
+
+==================================================
+ENHANCED TESTING: reversible_standard
+==================================================
+1. Calculating baseline language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 16050.04 (avg_loss: 9.6835)
+2. Measuring computational efficiency...
+3. Analyzing memory efficiency...
+4. Testing memory scaling...
+  Seq 128: 2006.5 MB (15.676 MB/token)
+  Seq 256: 2035.1 MB (7.950 MB/token)
+  Seq 512: 2083.7 MB (4.070 MB/token)
+5. Fine-tuning with enhanced metrics...
+Training config: LR=0.0001, Epochs=30
+Data loaders - Train: 125 batches, Val: 25 batches
+Epoch 1, Batch 0: Loss: 9.6841, Acc: 0.0%, LR: 0.000100
+Epoch 1, Batch 30: Loss: 8.8990, Acc: 3.1%, LR: 0.000100
+Epoch 1, Batch 60: Loss: 8.5420, Acc: 3.2%, LR: 0.000100
+Epoch 1, Batch 90: Loss: 8.3433, Acc: 3.2%, LR: 0.000100
+Epoch 1, Batch 120: Loss: 8.3418, Acc: 3.4%, LR: 0.000100
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 8.2821, acc: 3.3%
+Epoch 1: Train Loss: 8.6666, Val Loss: 8.2821, Train Acc: 3.5%, Val Acc: 3.3%, Time: 51.60s, Memory: 6412.2MB, LR: 0.000100
+Epoch 2, Batch 0: Loss: 8.2536, Acc: 3.2%, LR: 0.000100
+Epoch 2, Batch 30: Loss: 7.8753, Acc: 4.3%, LR: 0.000100
+Epoch 2, Batch 60: Loss: 7.6374, Acc: 4.8%, LR: 0.000100
+Epoch 2, Batch 90: Loss: 7.4593, Acc: 5.2%, LR: 0.000100
+Epoch 2, Batch 120: Loss: 7.2322, Acc: 5.5%, LR: 0.000100
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 7.1752, acc: 6.6%
+Epoch 2: Train Loss: 7.6729, Val Loss: 7.1752, Train Acc: 5.6%, Val Acc: 6.6%, Time: 52.44s, Memory: 6411.7MB, LR: 0.000100
+Epoch 3, Batch 0: Loss: 7.1718, Acc: 6.4%, LR: 0.000100
+Epoch 3, Batch 30: Loss: 7.0004, Acc: 7.6%, LR: 0.000100
+Epoch 3, Batch 60: Loss: 6.7932, Acc: 8.2%, LR: 0.000100
+Epoch 3, Batch 90: Loss: 6.7334, Acc: 8.8%, LR: 0.000100
+Epoch 3, Batch 120: Loss: 6.3177, Acc: 9.9%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 6.3660, acc: 14.9%
+Epoch 3: Train Loss: 6.8019, Val Loss: 6.3660, Train Acc: 10.1%, Val Acc: 14.9%, Time: 53.14s, Memory: 6411.7MB, LR: 0.000099
+Epoch 4, Batch 0: Loss: 6.4786, Acc: 13.6%, LR: 0.000099
+Epoch 4, Batch 30: Loss: 6.1287, Acc: 15.5%, LR: 0.000099
+Epoch 4, Batch 60: Loss: 6.0075, Acc: 16.3%, LR: 0.000099
+Epoch 4, Batch 90: Loss: 5.6758, Acc: 17.3%, LR: 0.000099
+Epoch 4, Batch 120: Loss: 5.4219, Acc: 18.3%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 5.4581, acc: 22.8%
+Epoch 4: Train Loss: 5.9121, Val Loss: 5.4581, Train Acc: 18.4%, Val Acc: 22.8%, Time: 53.41s, Memory: 6411.7MB, LR: 0.000099
+Epoch 5, Batch 0: Loss: 5.3950, Acc: 23.1%, LR: 0.000099
+Epoch 5, Batch 30: Loss: 5.1993, Acc: 24.7%, LR: 0.000099
+Epoch 5, Batch 60: Loss: 4.9968, Acc: 26.0%, LR: 0.000099
+Epoch 5, Batch 90: Loss: 4.7571, Acc: 27.3%, LR: 0.000099
+Epoch 5, Batch 120: Loss: 4.6019, Acc: 28.5%, LR: 0.000098
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 4.6111, acc: 33.0%
+Epoch 5: Train Loss: 4.9941, Val Loss: 4.6111, Train Acc: 28.7%, Val Acc: 33.0%, Time: 53.44s, Memory: 6411.7MB, LR: 0.000098
+Epoch 6, Batch 0: Loss: 4.5998, Acc: 32.3%, LR: 0.000098
+Epoch 6, Batch 30: Loss: 4.3800, Acc: 34.8%, LR: 0.000098
+Epoch 6, Batch 60: Loss: 4.3139, Acc: 36.0%, LR: 0.000098
+Epoch 6, Batch 90: Loss: 3.9916, Acc: 37.2%, LR: 0.000098
+Epoch 6, Batch 120: Loss: 3.9064, Acc: 38.4%, LR: 0.000098
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 3.9083, acc: 42.9%
+Epoch 6: Train Loss: 4.2190, Val Loss: 3.9083, Train Acc: 38.5%, Val Acc: 42.9%, Time: 53.44s, Memory: 6411.7MB, LR: 0.000098
+Epoch 7, Batch 0: Loss: 3.7780, Acc: 43.7%, LR: 0.000098
+Epoch 7, Batch 30: Loss: 3.6678, Acc: 44.4%, LR: 0.000097
+Epoch 7, Batch 60: Loss: 3.6848, Acc: 45.3%, LR: 0.000097
+Epoch 7, Batch 90: Loss: 3.3620, Acc: 46.4%, LR: 0.000097
+Epoch 7, Batch 120: Loss: 3.2683, Acc: 47.4%, LR: 0.000097
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 3.2937, acc: 50.5%
+Epoch 7: Train Loss: 3.5531, Val Loss: 3.2937, Train Acc: 47.6%, Val Acc: 50.5%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000097
+Epoch 8, Batch 0: Loss: 3.1656, Acc: 52.4%, LR: 0.000097
+Epoch 8, Batch 30: Loss: 3.1364, Acc: 53.6%, LR: 0.000097
+Epoch 8, Batch 60: Loss: 2.9546, Acc: 54.4%, LR: 0.000096
+Epoch 8, Batch 90: Loss: 2.8452, Acc: 55.3%, LR: 0.000096
+Epoch 8, Batch 120: Loss: 2.7588, Acc: 56.2%, LR: 0.000096
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 2.7792, acc: 60.7%
+Epoch 8: Train Loss: 2.9857, Val Loss: 2.7792, Train Acc: 56.3%, Val Acc: 60.7%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000096
+Epoch 9, Batch 0: Loss: 2.6438, Acc: 62.3%, LR: 0.000096
+Epoch 9, Batch 30: Loss: 2.5938, Acc: 62.0%, LR: 0.000096
+Epoch 9, Batch 60: Loss: 2.5418, Acc: 62.3%, LR: 0.000095
+Epoch 9, Batch 90: Loss: 2.4370, Acc: 63.0%, LR: 0.000095
+Epoch 9, Batch 120: Loss: 2.3566, Acc: 63.6%, LR: 0.000095
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 2.3841, acc: 67.5%
+Epoch 9: Train Loss: 2.5200, Val Loss: 2.3841, Train Acc: 63.7%, Val Acc: 67.5%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000095
+Epoch 10, Batch 0: Loss: 2.2348, Acc: 69.9%, LR: 0.000095
+Epoch 10, Batch 30: Loss: 2.2793, Acc: 68.9%, LR: 0.000094
+Epoch 10, Batch 60: Loss: 2.1275, Acc: 69.0%, LR: 0.000094
+Epoch 10, Batch 90: Loss: 2.1196, Acc: 69.4%, LR: 0.000094
+Epoch 10, Batch 120: Loss: 1.9314, Acc: 70.0%, LR: 0.000094
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 2.0584, acc: 72.3%
+Epoch 10: Train Loss: 2.1554, Val Loss: 2.0584, Train Acc: 70.1%, Val Acc: 72.3%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000093
+Epoch 11, Batch 0: Loss: 1.9531, Acc: 74.0%, LR: 0.000093
+Epoch 11, Batch 30: Loss: 1.9235, Acc: 74.3%, LR: 0.000093
+Epoch 11, Batch 60: Loss: 1.8597, Acc: 74.6%, LR: 0.000093
+Epoch 11, Batch 90: Loss: 1.7696, Acc: 74.8%, LR: 0.000093
+Epoch 11, Batch 120: Loss: 1.7835, Acc: 75.2%, LR: 0.000092
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.7821, acc: 76.5%
+Epoch 11: Train Loss: 1.8533, Val Loss: 1.7821, Train Acc: 75.3%, Val Acc: 76.5%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000092
+Epoch 12, Batch 0: Loss: 1.7077, Acc: 79.2%, LR: 0.000092
+Epoch 12, Batch 30: Loss: 1.6401, Acc: 80.0%, LR: 0.000092
+Epoch 12, Batch 60: Loss: 1.6184, Acc: 80.0%, LR: 0.000091
+Epoch 12, Batch 90: Loss: 1.5266, Acc: 79.9%, LR: 0.000091
+Epoch 12, Batch 120: Loss: 1.5306, Acc: 80.3%, LR: 0.000091
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.5498, acc: 82.0%
+Epoch 12: Train Loss: 1.5918, Val Loss: 1.5498, Train Acc: 80.3%, Val Acc: 82.0%, Time: 53.45s, Memory: 6411.7MB, LR: 0.000091
+Epoch 13, Batch 0: Loss: 1.4685, Acc: 84.2%, LR: 0.000091
+Epoch 13, Batch 30: Loss: 1.4090, Acc: 84.1%, LR: 0.000090
+Epoch 13, Batch 60: Loss: 1.4037, Acc: 84.0%, LR: 0.000090
+Epoch 13, Batch 90: Loss: 1.3229, Acc: 84.2%, LR: 0.000090
+Epoch 13, Batch 120: Loss: 1.2749, Acc: 84.3%, LR: 0.000089
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.3338, acc: 85.7%
+Epoch 13: Train Loss: 1.3694, Val Loss: 1.3338, Train Acc: 84.3%, Val Acc: 85.7%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000089
+Epoch 14, Batch 0: Loss: 1.2371, Acc: 88.4%, LR: 0.000089
+Epoch 14, Batch 30: Loss: 1.2044, Acc: 88.0%, LR: 0.000089
+Epoch 14, Batch 60: Loss: 1.1429, Acc: 87.4%, LR: 0.000088
+Epoch 14, Batch 90: Loss: 1.1781, Acc: 87.3%, LR: 0.000088
+Epoch 14, Batch 120: Loss: 1.1085, Acc: 87.5%, LR: 0.000088
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.1577, acc: 88.4%
+Epoch 14: Train Loss: 1.1754, Val Loss: 1.1577, Train Acc: 87.6%, Val Acc: 88.4%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000087
+Epoch 15, Batch 0: Loss: 1.0678, Acc: 91.2%, LR: 0.000087
+Epoch 15, Batch 30: Loss: 1.0408, Acc: 91.4%, LR: 0.000087
+Epoch 15, Batch 60: Loss: 1.0186, Acc: 90.9%, LR: 0.000087
+Epoch 15, Batch 90: Loss: 0.9605, Acc: 90.8%, LR: 0.000086
+Epoch 15, Batch 120: Loss: 0.9465, Acc: 90.8%, LR: 0.000086
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.9968, acc: 90.7%
+Epoch 15: Train Loss: 1.0028, Val Loss: 0.9968, Train Acc: 90.8%, Val Acc: 90.7%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000086
+Epoch 16, Batch 0: Loss: 0.9301, Acc: 93.0%, LR: 0.000086
+Epoch 16, Batch 30: Loss: 0.9061, Acc: 93.0%, LR: 0.000085
+Epoch 16, Batch 60: Loss: 0.8358, Acc: 92.7%, LR: 0.000085
+Epoch 16, Batch 90: Loss: 0.8225, Acc: 92.7%, LR: 0.000084
+Epoch 16, Batch 120: Loss: 0.7868, Acc: 92.8%, LR: 0.000084
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.8373, acc: 93.4%
+Epoch 16: Train Loss: 0.8495, Val Loss: 0.8373, Train Acc: 92.9%, Val Acc: 93.4%, Time: 53.44s, Memory: 6411.7MB, LR: 0.000084
+Epoch 17, Batch 0: Loss: 0.7404, Acc: 95.7%, LR: 0.000084
+Epoch 17, Batch 30: Loss: 0.7432, Acc: 95.0%, LR: 0.000083
+Epoch 17, Batch 60: Loss: 0.7196, Acc: 94.7%, LR: 0.000083
+Epoch 17, Batch 90: Loss: 0.6841, Acc: 94.6%, LR: 0.000082
+Epoch 17, Batch 120: Loss: 0.6722, Acc: 94.7%, LR: 0.000082
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.7098, acc: 95.1%
+Epoch 17: Train Loss: 0.7114, Val Loss: 0.7098, Train Acc: 94.7%, Val Acc: 95.1%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000082
+Epoch 18, Batch 0: Loss: 0.6143, Acc: 97.0%, LR: 0.000082
+Epoch 18, Batch 30: Loss: 0.6192, Acc: 96.5%, LR: 0.000081
+Epoch 18, Batch 60: Loss: 0.5950, Acc: 96.5%, LR: 0.000081
+Epoch 18, Batch 90: Loss: 0.6034, Acc: 96.5%, LR: 0.000080
+Epoch 18, Batch 120: Loss: 0.5428, Acc: 96.5%, LR: 0.000080
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.5983, acc: 96.5%
+Epoch 18: Train Loss: 0.5893, Val Loss: 0.5983, Train Acc: 96.5%, Val Acc: 96.5%, Time: 53.49s, Memory: 6411.7MB, LR: 0.000080
+Epoch 19, Batch 0: Loss: 0.5185, Acc: 98.4%, LR: 0.000080
+Epoch 19, Batch 30: Loss: 0.5140, Acc: 97.7%, LR: 0.000079
+Epoch 19, Batch 60: Loss: 0.4803, Acc: 97.4%, LR: 0.000079
+Epoch 19, Batch 90: Loss: 0.4673, Acc: 97.4%, LR: 0.000078
+Epoch 19, Batch 120: Loss: 0.4303, Acc: 97.4%, LR: 0.000078
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.4868, acc: 97.5%
+Epoch 19: Train Loss: 0.4812, Val Loss: 0.4868, Train Acc: 97.4%, Val Acc: 97.5%, Time: 53.48s, Memory: 6411.7MB, LR: 0.000078
+Epoch 20, Batch 0: Loss: 0.3990, Acc: 99.0%, LR: 0.000078
+Epoch 20, Batch 30: Loss: 0.4076, Acc: 98.4%, LR: 0.000077
+Epoch 20, Batch 60: Loss: 0.3927, Acc: 98.3%, LR: 0.000077
+Epoch 20, Batch 90: Loss: 0.3795, Acc: 98.3%, LR: 0.000076
+Epoch 20, Batch 120: Loss: 0.3576, Acc: 98.3%, LR: 0.000076
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.4073, acc: 98.0%
+Epoch 20: Train Loss: 0.3896, Val Loss: 0.4073, Train Acc: 98.3%, Val Acc: 98.0%, Time: 53.48s, Memory: 6411.7MB, LR: 0.000076
+Epoch 21, Batch 0: Loss: 0.3317, Acc: 99.0%, LR: 0.000076
+Epoch 21, Batch 30: Loss: 0.3249, Acc: 99.1%, LR: 0.000075
+Epoch 21, Batch 60: Loss: 0.3137, Acc: 99.1%, LR: 0.000075
+Epoch 21, Batch 90: Loss: 0.2989, Acc: 99.0%, LR: 0.000074
+Epoch 21, Batch 120: Loss: 0.2840, Acc: 99.0%, LR: 0.000073
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.3346, acc: 98.7%
+Epoch 21: Train Loss: 0.3152, Val Loss: 0.3346, Train Acc: 99.0%, Val Acc: 98.7%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000073
+Epoch 22, Batch 0: Loss: 0.2732, Acc: 99.4%, LR: 0.000073
+Epoch 22, Batch 30: Loss: 0.2582, Acc: 99.3%, LR: 0.000073
+Epoch 22, Batch 60: Loss: 0.2414, Acc: 99.3%, LR: 0.000072
+Epoch 22, Batch 90: Loss: 0.2385, Acc: 99.3%, LR: 0.000072
+Epoch 22, Batch 120: Loss: 0.2363, Acc: 99.3%, LR: 0.000071
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.2680, acc: 99.1%
+Epoch 22: Train Loss: 0.2516, Val Loss: 0.2680, Train Acc: 99.3%, Val Acc: 99.1%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000071
+Epoch 23, Batch 0: Loss: 0.2129, Acc: 99.7%, LR: 0.000071
+Epoch 23, Batch 30: Loss: 0.2011, Acc: 99.7%, LR: 0.000070
+Epoch 23, Batch 60: Loss: 0.2098, Acc: 99.6%, LR: 0.000070
+Epoch 23, Batch 90: Loss: 0.1862, Acc: 99.6%, LR: 0.000069
+Epoch 23, Batch 120: Loss: 0.1751, Acc: 99.6%, LR: 0.000069
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.2161, acc: 99.5%
+Epoch 23: Train Loss: 0.1981, Val Loss: 0.2161, Train Acc: 99.6%, Val Acc: 99.5%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000069
+Epoch 24, Batch 0: Loss: 0.1638, Acc: 99.9%, LR: 0.000069
+Epoch 24, Batch 30: Loss: 0.1683, Acc: 99.8%, LR: 0.000068
+Epoch 24, Batch 60: Loss: 0.1515, Acc: 99.8%, LR: 0.000068
+Epoch 24, Batch 90: Loss: 0.1453, Acc: 99.8%, LR: 0.000067
+Epoch 24, Batch 120: Loss: 0.1385, Acc: 99.8%, LR: 0.000066
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1781, acc: 99.7%
+Epoch 24: Train Loss: 0.1577, Val Loss: 0.1781, Train Acc: 99.8%, Val Acc: 99.7%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000066
+Epoch 25, Batch 0: Loss: 0.1399, Acc: 99.8%, LR: 0.000066
+Epoch 25, Batch 30: Loss: 0.1269, Acc: 99.9%, LR: 0.000066
+Epoch 25, Batch 60: Loss: 0.1226, Acc: 99.9%, LR: 0.000065
+Epoch 25, Batch 90: Loss: 0.1284, Acc: 99.9%, LR: 0.000064
+Epoch 25, Batch 120: Loss: 0.1260, Acc: 99.9%, LR: 0.000064
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1474, acc: 99.8%
+Epoch 25: Train Loss: 0.1284, Val Loss: 0.1474, Train Acc: 99.9%, Val Acc: 99.8%, Time: 53.46s, Memory: 6411.7MB, LR: 0.000064
+Epoch 26, Batch 0: Loss: 0.1114, Acc: 100.0%, LR: 0.000064
+Epoch 26, Batch 30: Loss: 0.1094, Acc: 99.9%, LR: 0.000063
+Epoch 26, Batch 60: Loss: 0.1012, Acc: 99.9%, LR: 0.000063
+Epoch 26, Batch 90: Loss: 0.0980, Acc: 99.9%, LR: 0.000062
+Epoch 26, Batch 120: Loss: 0.0992, Acc: 99.9%, LR: 0.000061
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1236, acc: 99.9%
+Epoch 26: Train Loss: 0.1052, Val Loss: 0.1236, Train Acc: 99.9%, Val Acc: 99.9%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000061
+Epoch 27, Batch 0: Loss: 0.0939, Acc: 100.0%, LR: 0.000061
+Epoch 27, Batch 30: Loss: 0.0928, Acc: 100.0%, LR: 0.000061
+Epoch 27, Batch 60: Loss: 0.0867, Acc: 100.0%, LR: 0.000060
+Epoch 27, Batch 90: Loss: 0.0815, Acc: 100.0%, LR: 0.000059
+Epoch 27, Batch 120: Loss: 0.0788, Acc: 100.0%, LR: 0.000059
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1054, acc: 99.9%
+Epoch 27: Train Loss: 0.0876, Val Loss: 0.1054, Train Acc: 100.0%, Val Acc: 99.9%, Time: 53.48s, Memory: 6411.7MB, LR: 0.000059
+Epoch 28, Batch 0: Loss: 0.0807, Acc: 100.0%, LR: 0.000059
+Epoch 28, Batch 30: Loss: 0.0775, Acc: 100.0%, LR: 0.000058
+Epoch 28, Batch 60: Loss: 0.0786, Acc: 100.0%, LR: 0.000058
+Epoch 28, Batch 90: Loss: 0.0684, Acc: 100.0%, LR: 0.000057
+Epoch 28, Batch 120: Loss: 0.0689, Acc: 100.0%, LR: 0.000056
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0901, acc: 99.9%
+Epoch 28: Train Loss: 0.0741, Val Loss: 0.0901, Train Acc: 100.0%, Val Acc: 99.9%, Time: 53.47s, Memory: 6411.7MB, LR: 0.000056
+Epoch 29, Batch 0: Loss: 0.0644, Acc: 100.0%, LR: 0.000056
+Epoch 29, Batch 30: Loss: 0.0660, Acc: 100.0%, LR: 0.000056
+Epoch 29, Batch 60: Loss: 0.0615, Acc: 100.0%, LR: 0.000055
+Epoch 29, Batch 90: Loss: 0.0639, Acc: 100.0%, LR: 0.000054
+Epoch 29, Batch 120: Loss: 0.0620, Acc: 100.0%, LR: 0.000054
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0785, acc: 100.0%
+Epoch 29: Train Loss: 0.0634, Val Loss: 0.0785, Train Acc: 100.0%, Val Acc: 100.0%, Time: 53.48s, Memory: 6411.7MB, LR: 0.000054
+Epoch 30, Batch 0: Loss: 0.0587, Acc: 100.0%, LR: 0.000054
+Epoch 30, Batch 30: Loss: 0.0589, Acc: 100.0%, LR: 0.000053
+Epoch 30, Batch 60: Loss: 0.0552, Acc: 100.0%, LR: 0.000052
+Epoch 30, Batch 90: Loss: 0.0522, Acc: 100.0%, LR: 0.000052
+Epoch 30, Batch 120: Loss: 0.0568, Acc: 100.0%, LR: 0.000051
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0687, acc: 100.0%
+Epoch 30: Train Loss: 0.0550, Val Loss: 0.0687, Train Acc: 100.0%, Val Acc: 100.0%, Time: 53.48s, Memory: 6411.7MB, LR: 0.000051
+6. Analyzing training stability...
+7. Final language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 1.07 (avg_loss: 0.0703)
+COMPLETED: reversible_standard
+  Perplexity: 16050.04 -> 1.07 (improvement: 16048.97)
+  Token Accuracy: 99.9%
+  Throughput: 31478 tokens/sec
+  Memory Efficiency: 2.13x
+  Memory Scaling: 0.20 MB/token
+
+==================================================
+ENHANCED TESTING: non_reversible_standard
+==================================================
+1. Calculating baseline language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 15970.08 (avg_loss: 9.6785)
+2. Measuring computational efficiency...
+3. Analyzing memory efficiency...
+4. Testing memory scaling...
+  Seq 128: 3004.2 MB (23.470 MB/token)
+  Seq 256: 3029.7 MB (11.835 MB/token)
+  Seq 512: 3073.9 MB (6.004 MB/token)
+5. Fine-tuning with enhanced metrics...
+Training config: LR=0.0001, Epochs=30
+Data loaders - Train: 125 batches, Val: 25 batches
+Epoch 1, Batch 0: Loss: 9.6803, Acc: 0.0%, LR: 0.000100
+Epoch 1, Batch 30: Loss: 8.8642, Acc: 3.1%, LR: 0.000100
+Epoch 1, Batch 60: Loss: 8.4457, Acc: 3.2%, LR: 0.000100
+Epoch 1, Batch 90: Loss: 8.2619, Acc: 3.7%, LR: 0.000100
+Epoch 1, Batch 120: Loss: 7.9317, Acc: 4.2%, LR: 0.000100
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 7.8402, acc: 8.5%
+Epoch 1: Train Loss: 8.5735, Val Loss: 7.8402, Train Acc: 4.3%, Val Acc: 8.5%, Time: 19.48s, Memory: 11547.3MB, LR: 0.000100
+Epoch 2, Batch 0: Loss: 7.8456, Acc: 7.8%, LR: 0.000100
+Epoch 2, Batch 30: Loss: 7.4530, Acc: 9.0%, LR: 0.000100
+Epoch 2, Batch 60: Loss: 7.1588, Acc: 9.3%, LR: 0.000100
+Epoch 2, Batch 90: Loss: 6.8946, Acc: 10.1%, LR: 0.000100
+Epoch 2, Batch 120: Loss: 6.5876, Acc: 10.8%, LR: 0.000100
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 6.5560, acc: 14.0%
+Epoch 2: Train Loss: 7.1682, Val Loss: 6.5560, Train Acc: 10.9%, Val Acc: 14.0%, Time: 19.49s, Memory: 11547.3MB, LR: 0.000100
+Epoch 3, Batch 0: Loss: 6.5192, Acc: 13.7%, LR: 0.000100
+Epoch 3, Batch 30: Loss: 6.2489, Acc: 14.8%, LR: 0.000100
+Epoch 3, Batch 60: Loss: 5.9764, Acc: 15.6%, LR: 0.000100
+Epoch 3, Batch 90: Loss: 5.7217, Acc: 16.6%, LR: 0.000100
+Epoch 3, Batch 120: Loss: 5.5029, Acc: 17.7%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 5.4585, acc: 22.1%
+Epoch 3: Train Loss: 6.0152, Val Loss: 5.4585, Train Acc: 17.9%, Val Acc: 22.1%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000099
+Epoch 4, Batch 0: Loss: 5.3698, Acc: 22.9%, LR: 0.000099
+Epoch 4, Batch 30: Loss: 5.1519, Acc: 24.7%, LR: 0.000099
+Epoch 4, Batch 60: Loss: 4.8713, Acc: 26.8%, LR: 0.000099
+Epoch 4, Batch 90: Loss: 4.6700, Acc: 28.6%, LR: 0.000099
+Epoch 4, Batch 120: Loss: 4.4557, Acc: 30.3%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 4.4236, acc: 35.8%
+Epoch 4: Train Loss: 4.8987, Val Loss: 4.4236, Train Acc: 30.5%, Val Acc: 35.8%, Time: 19.50s, Memory: 11547.3MB, LR: 0.000099
+Epoch 5, Batch 0: Loss: 4.4048, Acc: 34.7%, LR: 0.000099
+Epoch 5, Batch 30: Loss: 4.1446, Acc: 40.2%, LR: 0.000099
+Epoch 5, Batch 60: Loss: 3.9326, Acc: 41.9%, LR: 0.000099
+Epoch 5, Batch 90: Loss: 3.6714, Acc: 43.8%, LR: 0.000099
+Epoch 5, Batch 120: Loss: 3.4308, Acc: 45.6%, LR: 0.000098
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 3.4056, acc: 54.1%
+Epoch 5: Train Loss: 3.8807, Val Loss: 3.4056, Train Acc: 45.9%, Val Acc: 54.1%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000098
+Epoch 6, Batch 0: Loss: 3.2228, Acc: 56.9%, LR: 0.000098
+Epoch 6, Batch 30: Loss: 3.1163, Acc: 56.3%, LR: 0.000098
+Epoch 6, Batch 60: Loss: 2.8147, Acc: 58.0%, LR: 0.000098
+Epoch 6, Batch 90: Loss: 2.6947, Acc: 59.7%, LR: 0.000098
+Epoch 6, Batch 120: Loss: 2.5428, Acc: 61.3%, LR: 0.000098
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 2.5198, acc: 69.6%
+Epoch 6: Train Loss: 2.9095, Val Loss: 2.5198, Train Acc: 61.5%, Val Acc: 69.6%, Time: 19.50s, Memory: 11547.3MB, LR: 0.000098
+Epoch 7, Batch 0: Loss: 2.4716, Acc: 70.4%, LR: 0.000098
+Epoch 7, Batch 30: Loss: 2.3402, Acc: 71.8%, LR: 0.000097
+Epoch 7, Batch 60: Loss: 2.1765, Acc: 72.8%, LR: 0.000097
+Epoch 7, Batch 90: Loss: 1.9225, Acc: 74.0%, LR: 0.000097
+Epoch 7, Batch 120: Loss: 1.8241, Acc: 75.2%, LR: 0.000097
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.8209, acc: 81.9%
+Epoch 7: Train Loss: 2.1018, Val Loss: 1.8209, Train Acc: 75.4%, Val Acc: 81.9%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000097
+Epoch 8, Batch 0: Loss: 1.7135, Acc: 84.5%, LR: 0.000097
+Epoch 8, Batch 30: Loss: 1.6304, Acc: 84.2%, LR: 0.000097
+Epoch 8, Batch 60: Loss: 1.5063, Acc: 84.6%, LR: 0.000096
+Epoch 8, Batch 90: Loss: 1.3611, Acc: 85.2%, LR: 0.000096
+Epoch 8, Batch 120: Loss: 1.2735, Acc: 85.9%, LR: 0.000096
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.3198, acc: 89.0%
+Epoch 8: Train Loss: 1.5050, Val Loss: 1.3198, Train Acc: 86.0%, Val Acc: 89.0%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000096
+Epoch 9, Batch 0: Loss: 1.2678, Acc: 90.4%, LR: 0.000096
+Epoch 9, Batch 30: Loss: 1.1241, Acc: 91.6%, LR: 0.000096
+Epoch 9, Batch 60: Loss: 1.0258, Acc: 91.4%, LR: 0.000095
+Epoch 9, Batch 90: Loss: 0.9474, Acc: 91.7%, LR: 0.000095
+Epoch 9, Batch 120: Loss: 0.8842, Acc: 92.2%, LR: 0.000095
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.9186, acc: 94.3%
+Epoch 9: Train Loss: 1.0470, Val Loss: 0.9186, Train Acc: 92.3%, Val Acc: 94.3%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000095
+Epoch 10, Batch 0: Loss: 0.8349, Acc: 95.9%, LR: 0.000095
+Epoch 10, Batch 30: Loss: 0.7455, Acc: 96.2%, LR: 0.000094
+Epoch 10, Batch 60: Loss: 0.7450, Acc: 96.1%, LR: 0.000094
+Epoch 10, Batch 90: Loss: 0.6426, Acc: 96.3%, LR: 0.000094
+Epoch 10, Batch 120: Loss: 0.5667, Acc: 96.6%, LR: 0.000094
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.6033, acc: 97.5%
+Epoch 10: Train Loss: 0.7044, Val Loss: 0.6033, Train Acc: 96.6%, Val Acc: 97.5%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000093
+Epoch 11, Batch 0: Loss: 0.5242, Acc: 98.7%, LR: 0.000093
+Epoch 11, Batch 30: Loss: 0.4585, Acc: 98.5%, LR: 0.000093
+Epoch 11, Batch 60: Loss: 0.4278, Acc: 98.5%, LR: 0.000093
+Epoch 11, Batch 90: Loss: 0.3848, Acc: 98.6%, LR: 0.000093
+Epoch 11, Batch 120: Loss: 0.3453, Acc: 98.7%, LR: 0.000092
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.3725, acc: 99.0%
+Epoch 11: Train Loss: 0.4317, Val Loss: 0.3725, Train Acc: 98.7%, Val Acc: 99.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000092
+Epoch 12, Batch 0: Loss: 0.2938, Acc: 99.7%, LR: 0.000092
+Epoch 12, Batch 30: Loss: 0.2761, Acc: 99.5%, LR: 0.000092
+Epoch 12, Batch 60: Loss: 0.2556, Acc: 99.5%, LR: 0.000091
+Epoch 12, Batch 90: Loss: 0.2257, Acc: 99.6%, LR: 0.000091
+Epoch 12, Batch 120: Loss: 0.2094, Acc: 99.6%, LR: 0.000091
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.2302, acc: 99.6%
+Epoch 12: Train Loss: 0.2555, Val Loss: 0.2302, Train Acc: 99.6%, Val Acc: 99.6%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000091
+Epoch 13, Batch 0: Loss: 0.1895, Acc: 99.9%, LR: 0.000091
+Epoch 13, Batch 30: Loss: 0.1738, Acc: 99.9%, LR: 0.000090
+Epoch 13, Batch 60: Loss: 0.1537, Acc: 99.9%, LR: 0.000090
+Epoch 13, Batch 90: Loss: 0.1374, Acc: 99.9%, LR: 0.000090
+Epoch 13, Batch 120: Loss: 0.1272, Acc: 99.9%, LR: 0.000089
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1479, acc: 99.8%
+Epoch 13: Train Loss: 0.1555, Val Loss: 0.1479, Train Acc: 99.9%, Val Acc: 99.8%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000089
+Epoch 14, Batch 0: Loss: 0.1201, Acc: 100.0%, LR: 0.000089
+Epoch 14, Batch 30: Loss: 0.1083, Acc: 100.0%, LR: 0.000089
+Epoch 14, Batch 60: Loss: 0.1042, Acc: 100.0%, LR: 0.000088
+Epoch 14, Batch 90: Loss: 0.0899, Acc: 99.9%, LR: 0.000088
+Epoch 14, Batch 120: Loss: 0.0860, Acc: 99.9%, LR: 0.000088
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.1006, acc: 99.9%
+Epoch 14: Train Loss: 0.1007, Val Loss: 0.1006, Train Acc: 100.0%, Val Acc: 99.9%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000087
+Epoch 15, Batch 0: Loss: 0.0753, Acc: 100.0%, LR: 0.000087
+Epoch 15, Batch 30: Loss: 0.0779, Acc: 100.0%, LR: 0.000087
+Epoch 15, Batch 60: Loss: 0.0722, Acc: 100.0%, LR: 0.000087
+Epoch 15, Batch 90: Loss: 0.0645, Acc: 100.0%, LR: 0.000086
+Epoch 15, Batch 120: Loss: 0.0629, Acc: 100.0%, LR: 0.000086
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0716, acc: 100.0%
+Epoch 15: Train Loss: 0.0696, Val Loss: 0.0716, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000086
+Epoch 16, Batch 0: Loss: 0.0567, Acc: 100.0%, LR: 0.000086
+Epoch 16, Batch 30: Loss: 0.0527, Acc: 100.0%, LR: 0.000085
+Epoch 16, Batch 60: Loss: 0.0512, Acc: 100.0%, LR: 0.000085
+Epoch 16, Batch 90: Loss: 0.0459, Acc: 100.0%, LR: 0.000084
+Epoch 16, Batch 120: Loss: 0.0467, Acc: 100.0%, LR: 0.000084
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0538, acc: 100.0%
+Epoch 16: Train Loss: 0.0510, Val Loss: 0.0538, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000084
+Epoch 17, Batch 0: Loss: 0.0456, Acc: 100.0%, LR: 0.000084
+Epoch 17, Batch 30: Loss: 0.0412, Acc: 100.0%, LR: 0.000083
+Epoch 17, Batch 60: Loss: 0.0404, Acc: 100.0%, LR: 0.000083
+Epoch 17, Batch 90: Loss: 0.0374, Acc: 100.0%, LR: 0.000082
+Epoch 17, Batch 120: Loss: 0.0357, Acc: 100.0%, LR: 0.000082
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0423, acc: 100.0%
+Epoch 17: Train Loss: 0.0394, Val Loss: 0.0423, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000082
+Epoch 18, Batch 0: Loss: 0.0339, Acc: 100.0%, LR: 0.000082
+Epoch 18, Batch 30: Loss: 0.0333, Acc: 100.0%, LR: 0.000081
+Epoch 18, Batch 60: Loss: 0.0323, Acc: 100.0%, LR: 0.000081
+Epoch 18, Batch 90: Loss: 0.0316, Acc: 100.0%, LR: 0.000080
+Epoch 18, Batch 120: Loss: 0.0286, Acc: 100.0%, LR: 0.000080
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0343, acc: 100.0%
+Epoch 18: Train Loss: 0.0316, Val Loss: 0.0343, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000080
+Epoch 19, Batch 0: Loss: 0.0280, Acc: 100.0%, LR: 0.000080
+Epoch 19, Batch 30: Loss: 0.0271, Acc: 100.0%, LR: 0.000079
+Epoch 19, Batch 60: Loss: 0.0268, Acc: 100.0%, LR: 0.000079
+Epoch 19, Batch 90: Loss: 0.0252, Acc: 100.0%, LR: 0.000078
+Epoch 19, Batch 120: Loss: 0.0245, Acc: 100.0%, LR: 0.000078
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0287, acc: 100.0%
+Epoch 19: Train Loss: 0.0262, Val Loss: 0.0287, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.54s, Memory: 11547.3MB, LR: 0.000078
+Epoch 20, Batch 0: Loss: 0.0229, Acc: 100.0%, LR: 0.000078
+Epoch 20, Batch 30: Loss: 0.0227, Acc: 100.0%, LR: 0.000077
+Epoch 20, Batch 60: Loss: 0.0218, Acc: 100.0%, LR: 0.000077
+Epoch 20, Batch 90: Loss: 0.0221, Acc: 100.0%, LR: 0.000076
+Epoch 20, Batch 120: Loss: 0.0207, Acc: 100.0%, LR: 0.000076
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0245, acc: 100.0%
+Epoch 20: Train Loss: 0.0222, Val Loss: 0.0245, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000076
+Epoch 21, Batch 0: Loss: 0.0197, Acc: 100.0%, LR: 0.000076
+Epoch 21, Batch 30: Loss: 0.0192, Acc: 100.0%, LR: 0.000075
+Epoch 21, Batch 60: Loss: 0.0188, Acc: 100.0%, LR: 0.000075
+Epoch 21, Batch 90: Loss: 0.0185, Acc: 100.0%, LR: 0.000074
+Epoch 21, Batch 120: Loss: 0.0182, Acc: 100.0%, LR: 0.000073
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0213, acc: 100.0%
+Epoch 21: Train Loss: 0.0192, Val Loss: 0.0213, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000073
+Epoch 22, Batch 0: Loss: 0.0174, Acc: 100.0%, LR: 0.000073
+Epoch 22, Batch 30: Loss: 0.0171, Acc: 100.0%, LR: 0.000073
+Epoch 22, Batch 60: Loss: 0.0172, Acc: 100.0%, LR: 0.000072
+Epoch 22, Batch 90: Loss: 0.0164, Acc: 100.0%, LR: 0.000072
+Epoch 22, Batch 120: Loss: 0.0153, Acc: 100.0%, LR: 0.000071
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0188, acc: 100.0%
+Epoch 22: Train Loss: 0.0168, Val Loss: 0.0188, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000071
+Epoch 23, Batch 0: Loss: 0.0154, Acc: 100.0%, LR: 0.000071
+Epoch 23, Batch 30: Loss: 0.0153, Acc: 100.0%, LR: 0.000070
+Epoch 23, Batch 60: Loss: 0.0154, Acc: 100.0%, LR: 0.000070
+Epoch 23, Batch 90: Loss: 0.0144, Acc: 100.0%, LR: 0.000069
+Epoch 23, Batch 120: Loss: 0.0142, Acc: 100.0%, LR: 0.000069
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0168, acc: 100.0%
+Epoch 23: Train Loss: 0.0149, Val Loss: 0.0168, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.52s, Memory: 11547.3MB, LR: 0.000069
+Epoch 24, Batch 0: Loss: 0.0138, Acc: 100.0%, LR: 0.000069
+Epoch 24, Batch 30: Loss: 0.0136, Acc: 100.0%, LR: 0.000068
+Epoch 24, Batch 60: Loss: 0.0135, Acc: 100.0%, LR: 0.000068
+Epoch 24, Batch 90: Loss: 0.0131, Acc: 100.0%, LR: 0.000067
+Epoch 24, Batch 120: Loss: 0.0131, Acc: 100.0%, LR: 0.000066
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0151, acc: 100.0%
+Epoch 24: Train Loss: 0.0134, Val Loss: 0.0151, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000066
+Epoch 25, Batch 0: Loss: 0.0125, Acc: 100.0%, LR: 0.000066
+Epoch 25, Batch 30: Loss: 0.0120, Acc: 100.0%, LR: 0.000066
+Epoch 25, Batch 60: Loss: 0.0124, Acc: 100.0%, LR: 0.000065
+Epoch 25, Batch 90: Loss: 0.0123, Acc: 100.0%, LR: 0.000064
+Epoch 25, Batch 120: Loss: 0.0117, Acc: 100.0%, LR: 0.000064
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0138, acc: 100.0%
+Epoch 25: Train Loss: 0.0121, Val Loss: 0.0138, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.54s, Memory: 11547.3MB, LR: 0.000064
+Epoch 26, Batch 0: Loss: 0.0115, Acc: 100.0%, LR: 0.000064
+Epoch 26, Batch 30: Loss: 0.0111, Acc: 100.0%, LR: 0.000063
+Epoch 26, Batch 60: Loss: 0.0113, Acc: 100.0%, LR: 0.000063
+Epoch 26, Batch 90: Loss: 0.0109, Acc: 100.0%, LR: 0.000062
+Epoch 26, Batch 120: Loss: 0.0104, Acc: 100.0%, LR: 0.000061
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0126, acc: 100.0%
+Epoch 26: Train Loss: 0.0111, Val Loss: 0.0126, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000061
+Epoch 27, Batch 0: Loss: 0.0107, Acc: 100.0%, LR: 0.000061
+Epoch 27, Batch 30: Loss: 0.0102, Acc: 100.0%, LR: 0.000061
+Epoch 27, Batch 60: Loss: 0.0101, Acc: 100.0%, LR: 0.000060
+Epoch 27, Batch 90: Loss: 0.0099, Acc: 100.0%, LR: 0.000059
+Epoch 27, Batch 120: Loss: 0.0098, Acc: 100.0%, LR: 0.000059
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0116, acc: 100.0%
+Epoch 27: Train Loss: 0.0102, Val Loss: 0.0116, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000059
+Epoch 28, Batch 0: Loss: 0.0094, Acc: 100.0%, LR: 0.000059
+Epoch 28, Batch 30: Loss: 0.0096, Acc: 100.0%, LR: 0.000058
+Epoch 28, Batch 60: Loss: 0.0096, Acc: 100.0%, LR: 0.000058
+Epoch 28, Batch 90: Loss: 0.0091, Acc: 100.0%, LR: 0.000057
+Epoch 28, Batch 120: Loss: 0.0091, Acc: 100.0%, LR: 0.000056
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0108, acc: 100.0%
+Epoch 28: Train Loss: 0.0094, Val Loss: 0.0108, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.54s, Memory: 11547.3MB, LR: 0.000056
+Epoch 29, Batch 0: Loss: 0.0092, Acc: 100.0%, LR: 0.000056
+Epoch 29, Batch 30: Loss: 0.0088, Acc: 100.0%, LR: 0.000056
+Epoch 29, Batch 60: Loss: 0.0087, Acc: 100.0%, LR: 0.000055
+Epoch 29, Batch 90: Loss: 0.0089, Acc: 100.0%, LR: 0.000054
+Epoch 29, Batch 120: Loss: 0.0084, Acc: 100.0%, LR: 0.000054
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0101, acc: 100.0%
+Epoch 29: Train Loss: 0.0087, Val Loss: 0.0101, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.51s, Memory: 11547.3MB, LR: 0.000054
+Epoch 30, Batch 0: Loss: 0.0085, Acc: 100.0%, LR: 0.000054
+Epoch 30, Batch 30: Loss: 0.0083, Acc: 100.0%, LR: 0.000053
+Epoch 30, Batch 60: Loss: 0.0081, Acc: 100.0%, LR: 0.000052
+Epoch 30, Batch 90: Loss: 0.0080, Acc: 100.0%, LR: 0.000052
+Epoch 30, Batch 120: Loss: 0.0080, Acc: 100.0%, LR: 0.000051
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.0095, acc: 100.0%
+Epoch 30: Train Loss: 0.0082, Val Loss: 0.0095, Train Acc: 100.0%, Val Acc: 100.0%, Time: 19.53s, Memory: 11547.3MB, LR: 0.000051
+6. Analyzing training stability...
+7. Final language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 1.01 (avg_loss: 0.0098)
+COMPLETED: non_reversible_standard
+  Perplexity: 15970.08 -> 1.01 (improvement: 15969.07)
+  Token Accuracy: 100.0%
+  Throughput: 30338 tokens/sec
+  Memory Efficiency: 3.15x
+  Memory Scaling: 0.18 MB/token
+
+====================================================================================================
+ENHANCED BENCHMARK SUMMARY
+====================================================================================================
+Model                PPL      Acc%   BPB      Tok/s    Mem      Eff    Conv     Stab     Scale   
+-----------------------------------------------------------------------------------------------
+reversible_standard  1.1      99.9   0.10     31478    6412     2.1    0.287    0.2      0.20    
+non_reversible_standard 1.0      100.0  0.01     30338    11547    3.1    0.286    0.2      0.18    
+====================================================================================================
+
+METRIC EXPLANATIONS:
+PPL = Perplexity (language modeling quality, lower better)
+Acc% = Token prediction accuracy (higher better)
+BPB = Bits per byte (compression efficiency, lower better)
+Tok/s = Inference throughput (higher better)
+Mem = Peak memory usage in MB (lower better)
+Eff = Memory efficiency ratio (lower better)
+Conv = Convergence rate (loss improvement/epoch, higher better)
+Stab = Training stability (higher better)
+Scale = Memory scaling slope MB/token (lower better)
+
+====================================================================================================
+KEY INSIGHTS:
+====================================================================================================
+
+BEST PERFORMERS:
+  Memory Efficiency: reversible_standard
+  Throughput: reversible_standard
+  Token Accuracy: non_reversible_standard
+Enhanced visualization saved!
+Enhanced results saved to enhanced_qwen_results.json
+
+ENHANCED benchmarking completed successfully!

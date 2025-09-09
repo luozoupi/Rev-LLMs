@@ -1,0 +1,1749 @@
+"""
+Performance Testing Framework for Qwen3 Reversible Models - Enhanced Benchmarks
+===============================================================================
+
+Added comprehensive benchmarks: token accuracy, throughput, memory scaling, 
+training stability, and bits-per-byte metrics.
+"""
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import OneCycleLR, CosineAnnealingLR
+from torch.cuda.amp import GradScaler, autocast
+import numpy as np
+import time
+from typing import Dict, List, Tuple, Optional
+import json
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+from tqdm import tqdm
+
+import gzip
+import requests
+import os
+import zipfile
+import numpy as np
+import torch
+from pathlib import Path
+
+def load_enwik8_data(cache_dir='./data'):
+    """Load enwik8 character-level dataset"""
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(exist_ok=True)
+    
+    cache_path = cache_dir / 'enwik8.gz'
+    
+    if not cache_path.exists():
+        print("Downloading enwik8 dataset...")
+        url = 'http://mattmahoney.net/dc/enwik8.zip'
+        response = requests.get(url, stream=True)
+        
+        # Download and extract
+        zip_path = cache_dir / 'enwik8.zip'
+        with open(zip_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(cache_dir)
+        
+        # Compress to gz for faster loading
+        with open(cache_dir / 'enwik8', 'rb') as f_in:
+            with gzip.open(cache_path, 'wb') as f_out:
+                f_out.write(f_in.read())
+        
+        # Clean up
+        os.remove(zip_path)
+        os.remove(cache_dir / 'enwik8')
+    
+    # Load compressed data
+    with gzip.open(cache_path, 'rb') as f:
+        data = np.frombuffer(f.read(), dtype=np.uint8).copy()
+    
+    # Standard splits (90M train, 5M val, 5M test)
+    train_data = data[:int(90e6)]
+    val_data = data[int(90e6):int(95e6)]
+    test_data = data[int(95e6):]
+    
+    return {
+        'train': train_data,
+        'val': val_data,
+        'test': test_data,
+        'vocab_size': 256  # byte-level
+    }
+
+class Enwik8Dataset(torch.utils.data.Dataset):
+    """Character-level dataset for enwik8"""
+    
+    def __init__(self, data, seq_length=512):
+        self.data = torch.from_numpy(data).long()
+        self.seq_length = seq_length
+        self.training = True
+        
+    def __len__(self):
+        return max(0, len(self.data) - self.seq_length)
+    
+    def __getitem__(self, idx):
+        # Random start position for better coverage during training
+        if self.training:
+            idx = torch.randint(0, len(self.data) - self.seq_length, (1,)).item()
+        
+        # Get sequence and target
+        seq = self.data[idx:idx + self.seq_length]
+        target = self.data[idx + 1:idx + self.seq_length + 1]
+        
+        return seq, target
+    
+    def train(self):
+        self.training = True
+        return self
+    
+    def eval(self):
+        self.training = False
+        return self
+    
+def load_wikitext_data(subset="wikitext-103-raw-v1"):
+    """Load WikiText dataset instead of synthetic data"""
+    print("Loading WikiText dataset...")
+    dataset = load_dataset("wikitext", subset)
+    print(f"Loaded WikiText: Train={len(dataset['train'])}, Val={len(dataset['validation'])}, Test={len(dataset['test'])}")
+    return dataset
+
+def create_wikitext_tokenizer(dataset, vocab_size=32000):
+    """Create tokenizer from WikiText data"""
+    print("Creating WikiText tokenizer...")
+    
+    from tokenizers import Tokenizer
+    from tokenizers.models import WordLevel
+    from tokenizers.pre_tokenizers import Whitespace
+    from tokenizers.trainers import WordLevelTrainer
+    
+    tokenizer = Tokenizer(WordLevel(unk_token="<unk>"))
+    tokenizer.pre_tokenizer = Whitespace()
+    
+    trainer = WordLevelTrainer(
+        vocab_size=vocab_size,
+        special_tokens=["<unk>", "<pad>", "<bos>", "<eos>"]
+    )
+    
+    def batch_iterator():
+        texts_yielded = 0
+        for i in range(0, len(dataset["train"]["text"]), 1000):
+            batch_texts = []
+            for text in dataset["train"]["text"][i:i+1000]:
+                if text and text.strip() and len(text.strip()) > 10:
+                    batch_texts.append(text.strip())
+            if batch_texts:
+                yield batch_texts
+                texts_yielded += len(batch_texts)
+        print(f"Used {texts_yielded} texts for tokenizer training")
+    
+    tokenizer.train_from_iterator(batch_iterator(), trainer=trainer)
+    return tokenizer
+
+class WikiTextDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset_split, tokenizer, seq_length=512, stride=256):
+        self.tokenizer = tokenizer
+        self.seq_length = seq_length
+        self.stride = stride
+        
+        self.pad_id = tokenizer.token_to_id("<pad>")
+        self.unk_id = tokenizer.token_to_id("<unk>")
+        self.bos_id = tokenizer.token_to_id("<bos>")
+        self.eos_id = tokenizer.token_to_id("<eos>")
+        
+        self.ignore_index = self.pad_id if self.pad_id is not None else 0
+        
+        print(f"Special tokens - pad: {self.pad_id}, unk: {self.unk_id}, bos: {self.bos_id}, eos: {self.eos_id}")
+        
+        self.examples = []
+        
+        valid_texts = [text for text in dataset_split["text"] if text and text.strip() and len(text.strip()) > 20]
+        print(f"Processing {len(valid_texts)} valid texts from {len(dataset_split['text'])} total texts...")
+        
+        for text in tqdm(valid_texts, desc="Processing WikiText"):
+            clean_text = text.strip().replace('\n', ' ')
+            if len(clean_text) < 50:
+                continue
+                
+            tokens = tokenizer.encode(clean_text).ids
+            
+            if len(tokens) < seq_length + 1:
+                continue
+            
+            for start_idx in range(0, len(tokens) - seq_length, stride):
+                sequence = tokens[start_idx:start_idx + seq_length + 1]
+                if len(sequence) == seq_length + 1:
+                    self.examples.append(sequence)
+        
+        print(f"Created WikiText dataset with {len(self.examples)} sequences")
+        
+        if len(self.examples) == 0:
+            raise ValueError("No valid sequences created! Check tokenization and sequence length.")
+    
+    def __len__(self):
+        return len(self.examples)
+    
+    def __getitem__(self, idx):
+        tokens = self.examples[idx]
+        
+        x = torch.tensor(tokens[:-1], dtype=torch.long)
+        y = torch.tensor(tokens[1:], dtype=torch.long)
+        
+        y = torch.where(y == self.pad_id, torch.tensor(-100, dtype=torch.long), y)
+        
+        return x, y
+
+@dataclass
+class EnhancedPerformanceMetrics:
+    """Enhanced performance metrics with additional benchmarks"""
+    
+    # Basic Language Modeling
+    model_name: str
+    perplexity: float
+    loss: float
+    token_accuracy: float
+    bits_per_byte: float
+    
+    # Memory & Compute Efficiency  
+    memory_peak_mb: float
+    memory_reserved_mb: float
+    memory_efficiency_ratio: float
+    throughput_tokens_per_sec: float
+    time_per_token_ms: float
+    estimated_flops_per_token: float
+    
+    # Training Dynamics
+    training_time_per_epoch: float
+    gradient_norm: float
+    convergence_rate: float
+    training_stability: float
+    overfitting_gap: float
+    epochs_to_converge: int
+    
+    # Memory Scaling
+    memory_scaling_slope: float
+    
+    # Model-specific
+    attention_sparsity: Optional[float] = None
+    pruning_ratio: Optional[float] = None
+    reversible_layers_used: Optional[int] = None
+
+class ReversibleQwenPerformanceTester:
+    """Enhanced performance testing with comprehensive benchmarks"""
+    
+    def __init__(self, device='cuda'):
+        self.device = device
+        self.results = {}
+        
+    def create_test_dataset(self, vocab_size=50000, seq_len=512, num_samples=1000):
+        """Create synthetic dataset for testing"""
+        
+        weights = np.array([1.0 / (i + 1) ** 0.8 for i in range(vocab_size)])
+        weights /= weights.sum()
+        
+        data = []
+        for _ in range(num_samples):
+            sequence = np.random.choice(vocab_size, size=seq_len, p=weights)
+            targets = np.roll(sequence, -1)
+            
+            x = torch.tensor(sequence, dtype=torch.long)
+            y = torch.tensor(targets, dtype=torch.long)
+            y[-1] = -100
+            
+            data.append((x, y))
+        
+        return data
+    
+    def run_comprehensive_test_enwik8(self, seq_len=512, use_enwik8=True):
+        """Enhanced comprehensive test with enwik8 character-level modeling"""
+        
+        print("="*60)
+        print("ENHANCED REVERSIBLE QWEN3 COMPREHENSIVE BENCHMARKS - ENWIK8")
+        print("="*60)
+        
+        if use_enwik8:
+            try:
+                print("Loading enwik8 character-level dataset...")
+                enwik8_data = load_enwik8_data()
+                vocab_size = enwik8_data['vocab_size']  # 256 for byte-level
+                
+                print("Creating enwik8 datasets...")
+                train_dataset = Enwik8Dataset(enwik8_data['train'], seq_len).train()
+                val_dataset = Enwik8Dataset(enwik8_data['val'], seq_len).eval()
+                test_dataset = Enwik8Dataset(enwik8_data['test'], seq_len).eval()
+                
+                print(f"Dataset sizes: Train={len(train_dataset)}, Val={len(val_dataset)}, Test={len(test_dataset)}")
+                print(f"Vocabulary size: {vocab_size} (character-level)")
+                
+                # Use smaller batch sizes for character-level training
+                train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, drop_last=True)
+                val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, drop_last=False)
+                test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, drop_last=False)
+                
+            except Exception as e:
+                print(f"Enwik8 loading failed: {e}")
+                print("Falling back to synthetic data...")
+                use_enwik8 = False
+                vocab_size = 256
+        
+        if not use_enwik8:
+            # Fallback to synthetic character-level data
+            train_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=1000)
+            val_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=200)
+            test_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=300)
+            
+            train_loader = DataLoader(train_data, batch_size=8, shuffle=True, drop_last=True)
+            val_loader = DataLoader(val_data, batch_size=8, shuffle=False)
+            test_loader = DataLoader(test_data, batch_size=8, shuffle=False)
+            vocab_size = 256
+        
+        # Setup models with character-level vocabulary
+        print("Setting up models for character-level modeling...")
+        models = self.setup_models_for_comparison(
+            vocab_size=vocab_size,  # 256 for character-level
+            hidden_size=512*2,  # Can be larger since vocab is smaller
+            num_layers=6,     # Deeper models for character-level
+            num_heads=8
+        )
+        
+        if not models:
+            print("No models created successfully!")
+            return None
+        
+        # Enhanced training configuration for enwik8
+        enhanced_config = {
+            'epochs': 1,  # More epochs for character-level
+            'learning_rate': 0.001,  # Higher LR for character-level
+            'min_learning_rate': 0.00001,
+            'weight_decay': 0.01,
+            'warmup_epochs': 1,
+            'patience': 5,
+            'use_amp': True
+        }
+        
+        # Test each model with enwik8-specific metrics
+        all_results = {}
+        
+        for model_name, model in models.items():
+            print(f"\n{'='*50}")
+            print(f"ENHANCED TESTING: {model_name} on ENWIK8")
+            print(f"{'='*50}")
+            
+            try:
+                # 1. Baseline character-level metrics
+                print("1. Calculating character-level language modeling metrics...")
+                baseline_ppl, baseline_loss = self.calculate_perplexity(model, test_loader, max_batches=100)
+                
+                # Calculate bits per character (standard enwik8 metric)
+                bits_per_char = baseline_loss / np.log(2)  # Convert from nats to bits
+                print(f"Bits per character: {bits_per_char:.3f}")
+                
+                # 2. Enhanced training with character-level tracking
+                print("2. Running enhanced training...")
+                train_results = self.fine_tune_model(
+                    model, train_loader, val_loader, max_epochs=enhanced_config['epochs']
+                )
+                                
+                # 3. Computational efficiency for character-level
+                print("3. Measuring character-level computational efficiency...")
+                comp_metrics = self.measure_computational_efficiency(model, test_loader, max_batches=100)
+                
+                # 4. Memory efficiency
+                print("4. Analyzing memory efficiency...")
+                mem_metrics = self.measure_memory_efficiency(model)
+                
+                # 5. Memory scaling for longer sequences
+                print("5. Testing memory scaling...")
+                scaling_metrics = self.analyze_memory_scaling(model, seq_lengths=[256, 512, 1024, 2048])
+                
+                # Create enhanced metrics with enwik8-specific additions
+                enhanced_metrics = EnhancedPerformanceMetrics(
+                    model_name=model_name,
+                    perplexity=baseline_ppl,
+                    loss=baseline_loss,
+                    token_accuracy=train_results.get('final_token_accuracy', 0.0),
+                    bits_per_byte=bits_per_char,  # Key enwik8 metric
+                    
+                    # Memory metrics
+                    memory_peak_mb=mem_metrics['peak_memory_mb'],
+                    memory_reserved_mb=mem_metrics['reserved_memory_mb'],
+                    memory_efficiency_ratio=mem_metrics['efficiency_ratio'],
+                    throughput_tokens_per_sec=comp_metrics['throughput_tokens_per_sec'],
+                    time_per_token_ms=comp_metrics['time_per_token_ms'],
+                    estimated_flops_per_token=comp_metrics.get('estimated_flops_per_token', 0),
+                    
+                    # Training dynamics
+                    training_time_per_epoch=train_results.get('avg_epoch_time', 0),
+                    gradient_norm=train_results.get('final_gradient_norm', 0),
+                    convergence_rate=train_results.get('convergence_rate', 0),
+                    training_stability=train_results.get('training_stability', 0),
+                    overfitting_gap=train_results.get('overfitting_gap', 0),
+                    epochs_to_converge=train_results.get('epochs_to_converge', enhanced_config['epochs']),
+                    
+                    # Memory scaling
+                    memory_scaling_slope=scaling_metrics.get('slope', 0),
+                    
+                    # Model-specific
+                    reversible_layers_used=getattr(model, 'num_reversible_layers', None)
+                )
+                
+                all_results[model_name] = {
+                    'enhanced_metrics': enhanced_metrics,
+                    'baseline_perplexity': baseline_ppl,
+                    'bits_per_character': bits_per_char,  # Standard enwik8 metric
+                    'improvement': max(0, 100 * (1 - baseline_ppl / 100)),  # Relative improvement
+                    'memory_scaling_data': scaling_metrics,
+                    'training_curves': {
+                        'train_losses': train_results.get('train_losses', []),
+                        'val_losses': train_results.get('val_losses', []),
+                        'epoch_times': train_results.get('epoch_times', []),
+                        'token_accuracies': train_results.get('token_accuracies', [])
+                    }
+                }
+                
+                print(f"✅ {model_name} completed successfully!")
+                print(f"   Final perplexity: {baseline_ppl:.2f}")
+                print(f"   Bits per character: {bits_per_char:.3f}")
+                print(f"   Memory peak: {mem_metrics['peak_memory_mb']:.1f} MB")
+                
+            except Exception as e:
+                print(f"❌ {model_name} failed: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        return all_results if all_results else None
+    
+    def get_enwik8_training_config(self):
+        """Optimized config for enwik8 character-level training"""
+        return {
+            'epochs': 1,  # Character-level needs more epochs
+            'learning_rate': 0.001,  # Higher LR for character-level
+            'min_learning_rate': 0.00001,
+            'weight_decay': 0.01,
+            'warmup_epochs': 2,
+            'patience': 8,
+            'use_amp': True,
+            'gradient_clip_norm': 1.0,
+            'batch_size': 32,  # Can use larger batches with smaller vocab
+            'accumulation_steps': 2
+        }
+
+    def calculate_enwik8_metrics(self, model, test_loader, max_batches=100):
+        """Calculate enwik8-specific metrics (bits per character)"""
+        
+        model.eval()
+        total_loss = 0
+        total_chars = 0
+        total_correct = 0
+        
+        print("Calculating enwik8 character-level metrics...")
+        
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(tqdm(test_loader)):
+                if batch_idx >= max_batches:
+                    break
+                    
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                
+                try:
+                    with autocast():
+                        logits = model(inputs)
+                        
+                        # Calculate loss
+                        if logits.dim() == 3:
+                            logits = logits.view(-1, logits.size(-1))
+                            targets = targets.view(-1)
+                        
+                        # Remove padding tokens if any
+                        valid_mask = targets != -100
+                        
+                        if valid_mask.any():
+                            valid_logits = logits[valid_mask]
+                            valid_targets = targets[valid_mask]
+                            
+                            loss = F.cross_entropy(valid_logits, valid_targets, reduction='sum')
+                            total_loss += loss.item()
+                            
+                            # Character accuracy
+                            predictions = valid_logits.argmax(dim=-1)
+                            correct = (predictions == valid_targets).sum().item()
+                            total_correct += correct
+                            total_chars += valid_targets.numel()
+                    
+                except Exception as e:
+                    print(f"Error in batch {batch_idx}: {e}")
+                    continue
+        
+        if total_chars == 0:
+            return {
+                'bits_per_character': float('inf'),
+                'character_accuracy': 0.0,
+                'perplexity': float('inf')
+            }
+        
+        # Calculate metrics
+        avg_loss = total_loss / total_chars
+        bits_per_char = avg_loss / np.log(2)  # Convert nats to bits
+        char_accuracy = total_correct / total_chars
+        perplexity = np.exp(avg_loss)
+        
+        return {
+            'bits_per_character': bits_per_char,
+            'character_accuracy': char_accuracy,
+            'perplexity': perplexity,
+            'total_characters': total_chars
+        }
+
+    def setup_models_for_enwik8(self, hidden_size=512, num_layers=6, num_heads=8):
+        """Setup models specifically optimized for enwik8 character-level modeling"""
+        
+        vocab_size = 256  # Character-level vocabulary
+        
+        models = {}
+        
+        # Model configurations optimized for character-level
+        configs = {
+            'Standard_Char': {
+                'vocab_size': vocab_size,
+                'hidden_size': hidden_size,
+                'num_layers': num_layers,
+                'num_heads': num_heads,
+                'max_seq_length': 2048,  # Can handle longer sequences with smaller vocab
+                'use_reversible': False
+            },
+            'Reversible_Char': {
+                'vocab_size': vocab_size,
+                'hidden_size': hidden_size,
+                'num_layers': num_layers,
+                'num_heads': num_heads,
+                'max_seq_length': 2048,
+                'use_reversible': True,
+                'num_reversible_layers': num_layers - 2  # Keep some non-reversible layers
+            },
+            'Deep_Reversible_Char': {
+                'vocab_size': vocab_size,
+                'hidden_size': hidden_size,
+                'num_layers': num_layers + 4,  # Deeper for character-level
+                'num_heads': num_heads,
+                'max_seq_length': 2048,
+                'use_reversible': True,
+                'num_reversible_layers': num_layers + 2
+            }
+        }
+        
+        for name, config in configs.items():
+            try:
+                print(f"Creating {name} with vocab_size={config['vocab_size']}")
+                
+                # Your model creation logic here - adjust based on your actual model classes
+                # This is a placeholder - replace with your actual model instantiation
+                model = self.create_qwen_model(**config)
+                
+                if model is not None:
+                    model = model.to(self.device)
+                    models[name] = model
+                    print(f"✅ {name} created successfully")
+                    
+                    # Print model info
+                    total_params = sum(p.numel() for p in model.parameters())
+                    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+                    print(f"   Total params: {total_params:,}")
+                    print(f"   Trainable params: {trainable_params:,}")
+                    
+            except Exception as e:
+                print(f"❌ Failed to create {name}: {e}")
+                continue
+        
+        return models
+
+    def calculate_enwik8_metrics(self, model, test_loader, max_batches=100):
+        """Calculate enwik8-specific metrics (bits per character)"""
+        
+        model.eval()
+        total_loss = 0
+        total_chars = 0
+        total_correct = 0
+        
+        print("Calculating enwik8 character-level metrics...")
+        
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(tqdm(test_loader)):
+                if batch_idx >= max_batches:
+                    break
+                    
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                
+                try:
+                    with autocast():
+                        logits = model(inputs)
+                        
+                        # Calculate loss
+                        if logits.dim() == 3:
+                            logits = logits.view(-1, logits.size(-1))
+                            targets = targets.view(-1)
+                        
+                        # Remove padding tokens if any
+                        valid_mask = targets != -100
+                        
+                        if valid_mask.any():
+                            valid_logits = logits[valid_mask]
+                            valid_targets = targets[valid_mask]
+                            
+                            loss = F.cross_entropy(valid_logits, valid_targets, reduction='sum')
+                            total_loss += loss.item()
+                            
+                            # Character accuracy
+                            predictions = valid_logits.argmax(dim=-1)
+                            correct = (predictions == valid_targets).sum().item()
+                            total_correct += correct
+                            total_chars += valid_targets.numel()
+                    
+                except Exception as e:
+                    print(f"Error in batch {batch_idx}: {e}")
+                    continue
+        
+        if total_chars == 0:
+            return {
+                'bits_per_character': float('inf'),
+                'character_accuracy': 0.0,
+                'perplexity': float('inf')
+            }
+        
+        # Calculate metrics
+        avg_loss = total_loss / total_chars
+        bits_per_char = avg_loss / np.log(2)  # Convert nats to bits
+        char_accuracy = total_correct / total_chars
+        perplexity = np.exp(avg_loss)
+        
+        return {
+            'bits_per_character': bits_per_char,
+            'character_accuracy': char_accuracy,
+            'perplexity': perplexity,
+            'total_characters': total_chars
+        }
+
+
+    def get_wikitext_training_config(self):
+        """Optimized config for WikiText training"""
+        return {
+            'epochs': 1,
+            'learning_rate': 0.001,
+            'min_learning_rate': 1e-6,
+            'scheduler_type': 'cosine',
+            'warmup_ratio': 0.1,
+            'optimizer': 'adamw',
+            'weight_decay': 0.01,
+            'gradient_clip_norm': 1.0,
+            'gradient_accumulation_steps': 2,
+            'use_amp': True,
+            'amp_dtype': torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+            'early_stopping_patience': 4,
+            'early_stopping_min_delta': 0.001,
+            'betas': (0.9, 0.95),
+            'eps': 1e-8
+        }
+    
+    def get_optimized_training_config(self, model_type="reversible"):
+        """Get optimized training configuration based on model type"""
+        
+        if "reversible" in model_type.lower():
+            return self.get_wikitext_training_config()
+        else:
+            config = self.get_wikitext_training_config()
+            config.update({
+                'epochs': 1,
+                'learning_rate': 0.0001,
+                'early_stopping_patience': 3,
+                'betas': (0.9, 0.999)
+            })
+            return config
+        
+    def initialize_model_weights(self, model, model_type="reversible"):
+        """Proper initialization for different model types"""
+        
+        def init_weights(m):
+            if isinstance(m, nn.Linear):
+                if "reversible" in model_type.lower():
+                    torch.nn.init.xavier_normal_(m.weight, gain=1.0)
+                else:
+                    torch.nn.init.xavier_normal_(m.weight, gain=1.0)
+                    
+                if m.bias is not None:
+                    torch.nn.init.zeros_(m.bias)
+                    
+            elif isinstance(m, nn.LayerNorm):
+                torch.nn.init.ones_(m.weight)
+                torch.nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Embedding):
+                std = 0.01 if "reversible" in model_type.lower() else 0.02
+                torch.nn.init.normal_(m.weight, std=std)
+        
+        model.apply(init_weights)
+        
+        for module in model.modules():
+            if hasattr(module, 'grad_scale'):
+                torch.nn.init.constant_(module.grad_scale, 0.1)
+                
+        return model
+    
+    def setup_models_for_comparison(self, vocab_size=10000, hidden_size=512, 
+                                  num_layers=4, num_heads=8):
+        """Setup different model configurations for comparison"""
+        
+        from qwen3_reversible_01 import create_reversible_qwen3_model
+        
+        models = {}
+        
+        configs = [
+            ("reversible_standard", "standard", True),
+            # ("reversible_candidate", "candidate_selection", True), 
+            # ("reversible_sparse", "native_sparse", True),
+            ("non_reversible_standard", "standard", False)
+        ]
+        
+        for name, attention_type, use_reversible in configs:
+            try:
+                model = create_reversible_qwen3_model(
+                    vocab_size=vocab_size,
+                    hidden_size=hidden_size,
+                    num_hidden_layers=num_layers,
+                    num_attention_heads=num_heads,
+                    num_key_value_heads=num_heads // 2,
+                    attention_type=attention_type,
+                    use_reversible=use_reversible,
+                    reverse_thres=256 if use_reversible else 999999,
+                    candidate_pr_ratio=0.7,
+                    candidate_top_k=32
+                )
+                
+                model = self.initialize_model_weights(model, name)
+                model = model.to(self.device)
+                models[name] = model
+                
+                param_count = sum(p.numel() for p in model.parameters())
+                print(f"Created {name} model ({param_count:,} params)")
+                
+            except Exception as e:
+                print(f"Failed to create {name}: {e}")
+                
+        return models
+    
+    def create_scheduler(self, optimizer, config, steps_per_epoch):
+        """Create appropriate learning rate scheduler"""
+        
+        total_steps = config['epochs'] * steps_per_epoch
+        
+        if config['scheduler_type'] == 'onecycle':
+            scheduler = OneCycleLR(
+                optimizer,
+                max_lr=config['learning_rate'],
+                total_steps=total_steps,
+                pct_start=config['warmup_ratio'],
+                anneal_strategy='cos',
+                div_factor=25.0,
+                final_div_factor=1000.0,
+                cycle_momentum=True
+            )
+        elif config['scheduler_type'] == 'cosine':
+            scheduler = CosineAnnealingLR(
+                optimizer,
+                T_max=total_steps,
+                eta_min=config['min_learning_rate']
+            )
+        else:
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.7)
+            
+        return scheduler
+    
+    # NEW: Enhanced benchmarking methods
+    def measure_computational_efficiency(self, model, dataloader, max_batches=100):
+        """Measure throughput and computational efficiency"""
+        
+        model.eval()
+        torch.cuda.synchronize() if torch.cuda.is_available() else None
+        
+        total_tokens = 0
+        total_time = 0
+        
+        with torch.no_grad():
+            overall_start = time.time()
+            
+            for batch_idx, (inputs, targets) in enumerate(dataloader):
+                if batch_idx >= max_batches:
+                    break
+                    
+                inputs = inputs.to(self.device)
+                batch_start = time.time()
+                
+                outputs = model(inputs)
+                
+                torch.cuda.synchronize() if torch.cuda.is_available() else None
+                batch_time = time.time() - batch_start
+                
+                total_tokens += inputs.numel()
+                total_time += batch_time
+        
+        throughput = total_tokens / total_time if total_time > 0 else 0
+        time_per_token = (total_time / total_tokens * 1000) if total_tokens > 0 else 0
+        
+        # Estimate FLOPs (simplified approximation)
+        total_params = sum(p.numel() for p in model.parameters())
+        estimated_flops_per_token = 6 * total_params  # Forward pass approximation
+        
+        return {
+            'throughput_tokens_per_sec': throughput,
+            'time_per_token_ms': time_per_token,
+            'estimated_flops_per_token': estimated_flops_per_token
+        }
+    
+    def calculate_enhanced_language_metrics(self, model, dataloader, max_batches=100):
+        """Calculate token accuracy and bits-per-byte"""
+        
+        model.eval()
+        
+        # Token accuracy tracking
+        correct_predictions = 0
+        total_predictions = 0
+        
+        # Bits per byte tracking
+        total_nll_bits = 0
+        total_chars = 0
+        
+        criterion_sum = nn.CrossEntropyLoss(ignore_index=-100, reduction='sum')
+        
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(dataloader):
+                if batch_idx >= max_batches:
+                    break
+                    
+                inputs, targets = inputs.to(self.device), targets.to(self.device)
+                
+                try:
+                    outputs = model(inputs)
+                    logits = outputs['logits'] if isinstance(outputs, dict) else outputs
+                    
+                    shift_logits = logits[..., :-1, :].contiguous()
+                    shift_labels = targets[..., 1:].contiguous()
+                    
+                    # Token accuracy calculation
+                    predictions = torch.argmax(shift_logits, dim=-1)
+                    mask = (shift_labels != -100)
+                    correct = (predictions == shift_labels) & mask
+                    
+                    correct_predictions += correct.sum().item()
+                    total_predictions += mask.sum().item()
+                    
+                    # Bits per byte calculation
+                    nll = criterion_sum(shift_logits.view(-1, shift_logits.size(-1)), 
+                                      shift_labels.view(-1))
+                    
+                    total_nll_bits += nll.item() / np.log(2)  # Convert to bits
+                    total_chars += mask.sum().item()
+                    
+                except Exception as e:
+                    print(f"Enhanced metrics error: {e}")
+                    continue
+        
+        token_accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+        bits_per_byte = total_nll_bits / total_chars if total_chars > 0 else float('inf')
+        
+        return {
+            'token_accuracy': token_accuracy,
+            'bits_per_byte': bits_per_byte
+        }
+    
+    def analyze_memory_scaling(self, model, seq_lengths=[128, 256, 512, 1024]):
+        """Analyze how memory scales with sequence length"""
+        
+        memory_scaling = []
+        model.eval()
+        
+        for seq_len in seq_lengths:
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
+                torch.cuda.empty_cache()
+            
+            test_input = torch.randint(0, min(1000, getattr(model.config, 'vocab_size', 1000)), 
+                                     (1, seq_len)).to(self.device)
+            
+            try:
+                with torch.no_grad():
+                    outputs = model(test_input)
+                
+                if torch.cuda.is_available():
+                    peak_memory = torch.cuda.max_memory_allocated() / (1024**2)
+                else:
+                    peak_memory = 0
+                    
+                memory_scaling.append({
+                    'seq_length': seq_len,
+                    'peak_memory_mb': peak_memory,
+                    'memory_per_token': peak_memory / seq_len if seq_len > 0 else 0
+                })
+                
+                print(f"  Seq {seq_len}: {peak_memory:.1f} MB ({peak_memory/seq_len:.3f} MB/token)")
+                
+            except Exception as e:
+                print(f"Memory test failed for seq_len {seq_len}: {e}")
+                memory_scaling.append({
+                    'seq_length': seq_len,
+                    'peak_memory_mb': float('inf'),
+                    'memory_per_token': float('inf')
+                })
+        
+        # Calculate memory scaling slope
+        if len(memory_scaling) > 1:
+            seq_lens = [m['seq_length'] for m in memory_scaling]
+            memories = [m['peak_memory_mb'] for m in memory_scaling if m['peak_memory_mb'] != float('inf')]
+            
+            if len(memories) > 1:
+                slope = np.polyfit(seq_lens[:len(memories)], memories, 1)[0]
+            else:
+                slope = float('inf')
+        else:
+            slope = 0
+        
+        return {
+            'memory_scaling_data': memory_scaling,
+            'memory_scaling_slope': slope
+        }
+    
+    def measure_memory_efficiency(self, model):
+        """Calculate memory efficiency metrics"""
+        
+        total_params = sum(p.numel() for p in model.parameters())
+        param_memory = total_params * 4 / (1024**2)  # MB for fp32
+        
+        test_input = torch.randint(0, min(1000, getattr(model.config, 'vocab_size', 1000)), 
+                                 (1, 512)).to(self.device)
+        
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
+        
+        with torch.no_grad():
+            outputs = model(test_input)
+        
+        if torch.cuda.is_available():
+            peak_memory = torch.cuda.max_memory_allocated() / (1024**2)
+        else:
+            peak_memory = param_memory
+        
+        memory_efficiency_ratio = peak_memory / param_memory if param_memory > 0 else 1.0
+        
+        return {
+            'parameter_memory_mb': param_memory,
+            'peak_memory_mb': peak_memory,
+            'memory_efficiency_ratio': memory_efficiency_ratio
+        }
+    
+    def measure_training_stability(self, training_curves):
+        """Measure training stability and convergence characteristics"""
+        
+        if not training_curves.get('train_losses') or len(training_curves['train_losses']) < 3:
+            return {
+                'convergence_rate': 0.0,
+                'training_stability': 0.0,
+                'overfitting_gap': 0.0,
+                'epochs_to_converge': 0
+            }
+        
+        train_losses = np.array(training_curves['train_losses'])
+        val_losses = np.array(training_curves.get('val_losses', []))
+        
+        # Convergence rate (loss improvement per epoch)
+        initial_loss = train_losses[0]
+        final_loss = train_losses[-1]
+        convergence_rate = (initial_loss - final_loss) / len(train_losses)
+        
+        # Training stability (inverse of loss variance)
+        loss_variance = np.var(train_losses)
+        training_stability = 1.0 / (loss_variance + 1e-8)
+        
+        # Overfitting gap
+        if len(val_losses) > 0 and len(val_losses) == len(train_losses):
+            overfitting_gap = val_losses[-1] - train_losses[-1]
+        else:
+            overfitting_gap = 0.0
+        
+        return {
+            'convergence_rate': float(convergence_rate),
+            'training_stability': float(training_stability),
+            'overfitting_gap': float(overfitting_gap),
+            'epochs_to_converge': len(train_losses)
+        }
+    
+    def fine_tune_model(self, model, train_loader, val_loader, max_epochs=50):
+        """Enhanced fine-tuning with additional metric collection"""
+        
+        model_type = "reversible" if hasattr(model, 'use_reversible') and getattr(model, 'use_reversible', False) else "standard"
+        config = self.get_optimized_training_config(model_type)
+        
+        print(f"Training config: LR={config['learning_rate']}, Epochs={min(max_epochs, config['epochs'])}")
+        print(f"Data loaders - Train: {len(train_loader)} batches, Val: {len(val_loader)} batches")
+        
+        if len(val_loader) == 0:
+            print("CRITICAL: Validation loader is empty!")
+            return self._create_empty_results()
+        
+        # Setup optimizer and scheduler
+        if config['optimizer'] == 'adamw':
+            optimizer = torch.optim.AdamW(
+                model.parameters(),
+                lr=config['learning_rate'],
+                weight_decay=config['weight_decay'],
+                betas=config['betas'],
+                eps=config['eps']
+            )
+        else:
+            optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+        
+        scheduler = self.create_scheduler(optimizer, config, len(train_loader))
+        scaler = GradScaler() if config['use_amp'] else None
+        criterion = nn.CrossEntropyLoss(ignore_index=-100, reduction='mean')
+        
+        # Training tracking
+        train_losses = []
+        val_losses = []
+        epoch_times = []
+        memory_usage = []
+        gradient_norms = []
+        
+        # NEW: Enhanced tracking
+        token_accuracies = []
+        throughput_measurements = []
+        
+        best_val_loss = float('inf')
+        patience_counter = 0
+        epochs_to_run = min(max_epochs, config['epochs'])
+        
+        for epoch in range(epochs_to_run):
+            model.train()
+            epoch_start = time.time()
+            
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
+            
+            total_train_loss = 0
+            num_train_batches = 0
+            total_grad_norm = 0
+            
+            # NEW: Token accuracy tracking during training
+            train_correct = 0
+            train_total = 0
+            
+            optimizer.zero_grad()
+            
+            for batch_idx, (inputs, targets) in enumerate(train_loader):
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                
+                try:
+                    if config['use_amp'] and scaler is not None:
+                        with autocast(dtype=config['amp_dtype']):
+                            outputs = model(inputs)
+                            logits = outputs['logits'] if isinstance(outputs, dict) else outputs
+                            
+                            shift_logits = logits[..., :-1, :].contiguous()
+                            shift_labels = targets[..., 1:].contiguous()
+                            loss = criterion(
+                                shift_logits.view(-1, shift_logits.size(-1)),
+                                shift_labels.view(-1)
+                            )
+                        
+                        scaled_loss = scaler.scale(loss / config['gradient_accumulation_steps'])
+                        scaled_loss.backward()
+                    else:
+                        outputs = model(inputs)
+                        logits = outputs['logits'] if isinstance(outputs, dict) else outputs
+                        
+                        shift_logits = logits[..., :-1, :].contiguous()
+                        shift_labels = targets[..., 1:].contiguous()
+                        loss = criterion(
+                            shift_logits.view(-1, shift_logits.size(-1)),
+                            shift_labels.view(-1)
+                        )
+                        
+                        (loss / config['gradient_accumulation_steps']).backward()
+                    
+                    total_train_loss += loss.item()
+                    num_train_batches += 1
+                    
+                    # NEW: Calculate token accuracy during training
+                    with torch.no_grad():
+                        predictions = torch.argmax(shift_logits, dim=-1)
+                        mask = (shift_labels != -100)
+                        correct = (predictions == shift_labels) & mask
+                        train_correct += correct.sum().item()
+                        train_total += mask.sum().item()
+                    
+                    # Update weights
+                    if (batch_idx + 1) % config['gradient_accumulation_steps'] == 0:
+                        if config['use_amp'] and scaler is not None:
+                            scaler.unscale_(optimizer)
+                            grad_norm = torch.nn.utils.clip_grad_norm_(
+                                model.parameters(), config['gradient_clip_norm']
+                            )
+                            scaler.step(optimizer)
+                            scaler.update()
+                        else:
+                            grad_norm = torch.nn.utils.clip_grad_norm_(
+                                model.parameters(), config['gradient_clip_norm']
+                            )
+                            optimizer.step()
+                        
+                        scheduler.step()
+                        optimizer.zero_grad()
+                        total_grad_norm += grad_norm.item()
+                    
+                    if batch_idx % 30 == 0:
+                        current_lr = scheduler.get_last_lr()[0] if hasattr(scheduler, 'get_last_lr') else config['learning_rate']
+                        train_acc = train_correct / train_total * 100 if train_total > 0 else 0
+                        print(f"Epoch {epoch+1}, Batch {batch_idx}: Loss: {loss.item():.4f}, "
+                              f"Acc: {train_acc:.1f}%, LR: {current_lr:.6f}")
+                        
+                except Exception as e:
+                    print(f"Training error at batch {batch_idx}: {e}")
+                    continue
+            
+            avg_train_loss = total_train_loss / max(num_train_batches, 1)
+            avg_grad_norm = total_grad_norm / max(num_train_batches // config['gradient_accumulation_steps'], 1)
+            epoch_time = time.time() - epoch_start
+            epoch_token_accuracy = train_correct / train_total if train_total > 0 else 0
+            
+            # Record memory usage
+            if torch.cuda.is_available():
+                peak_memory = torch.cuda.max_memory_allocated() / (1024**2)
+                reserved_memory = torch.cuda.max_memory_reserved() / (1024**2)
+                memory_usage.append({'peak': peak_memory, 'reserved': reserved_memory})
+            else:
+                memory_usage.append({'peak': 0, 'reserved': 0})
+            
+            # Enhanced validation loop
+            model.eval()
+            val_loss = 0
+            val_batches = 0
+            val_tokens = 0
+            val_correct = 0
+            val_total = 0
+            
+            print(f"Starting validation with {len(val_loader)} batches...")
+            
+            with torch.no_grad():
+                for val_batch_idx, (inputs, targets) in enumerate(val_loader):
+                    inputs = inputs.to(self.device)
+                    targets = targets.to(self.device)
+                    
+                    try:
+                        outputs = model(inputs)
+                        logits = outputs['logits'] if isinstance(outputs, dict) else outputs
+                        
+                        shift_logits = logits[..., :-1, :].contiguous()
+                        shift_labels = targets[..., 1:].contiguous()
+                        
+                        loss = criterion(
+                            shift_logits.view(-1, shift_logits.size(-1)),
+                            shift_labels.view(-1)
+                        )
+                        
+                        # Token accuracy for validation
+                        predictions = torch.argmax(shift_logits, dim=-1)
+                        mask = (shift_labels != -100)
+                        correct = (predictions == shift_labels) & mask
+                        
+                        valid_tokens = mask.sum().item()
+                        
+                        if not torch.isnan(loss) and not torch.isinf(loss) and valid_tokens > 0:
+                            val_loss += loss.item()
+                            val_correct += correct.sum().item()
+                            val_total += valid_tokens
+                            val_tokens += valid_tokens
+                            val_batches += 1
+                        
+                    except Exception as e:
+                        print(f"Validation error at batch {val_batch_idx}: {e}")
+                        continue
+            
+            # Calculate averages
+            avg_val_loss = val_loss / val_batches if val_batches > 0 else float('inf')
+            val_token_accuracy = val_correct / val_total if val_total > 0 else 0
+            
+            print(f"Validation: {val_batches} batches, {val_tokens} tokens, "
+                  f"loss: {avg_val_loss:.4f}, acc: {val_token_accuracy*100:.1f}%")
+            
+            # Record metrics
+            train_losses.append(avg_train_loss)
+            val_losses.append(avg_val_loss)
+            epoch_times.append(epoch_time)
+            gradient_norms.append(avg_grad_norm)
+            token_accuracies.append(val_token_accuracy)
+            
+            current_lr = scheduler.get_last_lr()[0] if hasattr(scheduler, 'get_last_lr') else config['learning_rate']
+            
+            print(f"Epoch {epoch+1}: Train Loss: {avg_train_loss:.4f}, "
+                  f"Val Loss: {avg_val_loss:.4f}, Train Acc: {epoch_token_accuracy*100:.1f}%, "
+                  f"Val Acc: {val_token_accuracy*100:.1f}%, Time: {epoch_time:.2f}s, "
+                  f"Memory: {memory_usage[-1]['peak']:.1f}MB, LR: {current_lr:.6f}")
+            
+            # Early stopping
+            if avg_val_loss < best_val_loss:
+                best_val_loss = avg_val_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= config['early_stopping_patience']:
+                    print(f"Early stopping at epoch {epoch+1}")
+                    break
+        
+        return {
+            'train_losses': train_losses,
+            'val_losses': val_losses,
+            'epoch_times': epoch_times,
+            'memory_usage': memory_usage,
+            'gradient_norms': gradient_norms,
+            'token_accuracies': token_accuracies
+        }
+    
+    def _create_empty_results(self):
+        """Create empty results for failed cases"""
+        return {
+            'train_losses': [],
+            'val_losses': [],
+            'epoch_times': [],
+            'memory_usage': [],
+            'gradient_norms': [],
+            'token_accuracies': []
+        }
+    
+    def calculate_perplexity(self, model, dataloader, max_batches=100):
+        """Enhanced perplexity calculation with better error handling"""
+        model.eval()
+        total_loss = 0.0
+        total_tokens = 0
+        valid_batches = 0
+        
+        criterion = nn.CrossEntropyLoss(ignore_index=-100, reduction='sum')
+        
+        print(f"Calculating perplexity with up to {max_batches} batches...")
+        
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(dataloader):
+                if batch_idx >= max_batches:
+                    break
+                    
+                inputs, targets = inputs.to(self.device), targets.to(self.device)
+                
+                try:
+                    outputs = model(inputs)
+                    logits = outputs['logits'] if isinstance(outputs, dict) else outputs
+                    
+                    shift_logits = logits[..., :-1, :].contiguous()
+                    shift_labels = targets[..., 1:].contiguous()
+                    
+                    loss = criterion(
+                        shift_logits.view(-1, shift_logits.size(-1)),
+                        shift_labels.view(-1)
+                    )
+                    
+                    valid_tokens = (shift_labels.view(-1) != -100).sum().item()
+                    
+                    if not torch.isnan(loss) and not torch.isinf(loss) and valid_tokens > 0:
+                        total_loss += loss.item()
+                        total_tokens += valid_tokens
+                        valid_batches += 1
+                    
+                except Exception as e:
+                    print(f"Perplexity calculation error at batch {batch_idx}: {e}")
+                    continue
+        
+        print(f"Perplexity calculation: {valid_batches} valid batches, {total_tokens} total tokens")
+        
+        if total_tokens == 0 or valid_batches == 0:
+            print("No valid tokens found for perplexity calculation!")
+            return float('inf'), float('inf')
+        
+        avg_loss = total_loss / total_tokens
+        avg_loss = min(avg_loss, 20.0)  # Clamp to prevent overflow
+        
+        perplexity = torch.exp(torch.tensor(avg_loss)).item()
+        
+        print(f"Final perplexity: {perplexity:.2f} (avg_loss: {avg_loss:.4f})")
+        
+        return perplexity, avg_loss
+    
+    def debug_dataset(self, dataset, name="dataset"):
+        """Debug dataset to understand structure"""
+        print(f"Debugging {name}...")
+        print(f"Dataset length: {len(dataset)}")
+        
+        if len(dataset) > 0:
+            sample_x, sample_y = dataset[0]
+            print(f"Sample input shape: {sample_x.shape}")
+            print(f"Sample target shape: {sample_y.shape}")
+            print(f"Sample input tokens (first 10): {sample_x[:10].tolist()}")
+            print(f"Sample target tokens (first 10): {sample_y[:10].tolist()}")
+            
+            ignore_count = (sample_y == -100).sum().item()
+            print(f"Ignore tokens (-100) in sample: {ignore_count}")
+            
+            print(f"Token range - input: [{sample_x.min().item()}, {sample_x.max().item()}]")
+            print(f"Token range - target: [{sample_y.min().item()}, {sample_y.max().item()}]")
+    
+    def run_comprehensive_test(self, seq_len=512, vocab_size=32000, use_wikitext=True):
+        """Enhanced comprehensive test with all benchmarks"""
+        
+        print("="*60)
+        print("ENHANCED REVERSIBLE QWEN3 COMPREHENSIVE BENCHMARKS")
+        print("="*60)
+        
+        if use_wikitext:
+            try:
+                dataset = load_wikitext_data()
+                tokenizer = create_wikitext_tokenizer(dataset, vocab_size)
+                actual_vocab_size = tokenizer.get_vocab_size()
+                print(f"Actual vocabulary size: {actual_vocab_size}")
+                
+                print("Creating WikiText datasets...")
+                train_dataset = WikiTextDataset(dataset['train'], tokenizer, seq_len, stride=seq_len//4)
+                val_dataset = WikiTextDataset(dataset['validation'], tokenizer, seq_len, stride=seq_len//4) 
+                test_dataset = WikiTextDataset(dataset['test'], tokenizer, seq_len, stride=seq_len//4)
+                
+                self.debug_dataset(train_dataset, "train")
+                self.debug_dataset(val_dataset, "validation")
+                self.debug_dataset(test_dataset, "test")
+                
+                train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True, drop_last=True)
+                val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, drop_last=False)
+                test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False, drop_last=False)
+                
+                vocab_size = actual_vocab_size
+                
+            except Exception as e:
+                print(f"WikiText loading failed: {e}")
+                print("Falling back to synthetic data...")
+                use_wikitext = False
+        
+        if not use_wikitext:
+            train_data = self.create_test_dataset(vocab_size, seq_len, 500)
+            val_data = self.create_test_dataset(vocab_size, seq_len, 100)
+            test_data = self.create_test_dataset(vocab_size, seq_len, 200)
+            
+            train_loader = DataLoader(train_data, batch_size=4, shuffle=True, drop_last=True)
+            val_loader = DataLoader(val_data, batch_size=4, shuffle=False)
+            test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
+        
+        # Setup models
+        print("Setting up models...")
+        models = self.setup_models_for_comparison(
+            vocab_size=vocab_size,
+            hidden_size=512*2,
+            num_layers=4+2, #was 4 in the first place
+            num_heads=8
+        )
+        
+        if not models:
+            print("No models created successfully!")
+            return None
+        
+        # Test each model with enhanced benchmarks
+        all_results = {}
+        
+        for model_name, model in models.items():
+            print(f"\n{'='*50}")
+            print(f"ENHANCED TESTING: {model_name}")
+            print(f"{'='*50}")
+            
+            try:
+                # 1. Baseline perplexity and language metrics
+                print("1. Calculating baseline language modeling metrics...")
+                baseline_ppl, baseline_loss = self.calculate_perplexity(model, test_loader, max_batches=100)
+                baseline_lm_metrics = self.calculate_enhanced_language_metrics(model, test_loader, max_batches=100)
+                
+                # 2. Computational efficiency
+                print("2. Measuring computational efficiency...")
+                comp_metrics = self.measure_computational_efficiency(model, test_loader, max_batches=100)
+                
+                # 3. Memory efficiency and scaling
+                print("3. Analyzing memory efficiency...")
+                mem_metrics = self.measure_memory_efficiency(model)
+                
+                print("4. Testing memory scaling...")
+                scaling_metrics = self.analyze_memory_scaling(model, seq_lengths=[128, 256, 512])
+                
+                # 5. Training with enhanced tracking
+                print("5. Fine-tuning with enhanced metrics...")
+                training_results = self.fine_tune_model(model, train_loader, val_loader, max_epochs=1)
+                
+                if not training_results['val_losses']:
+                    print(f"No validation results for {model_name}")
+                    continue
+                
+                # 6. Training stability analysis
+                print("6. Analyzing training stability...")
+                stability_metrics = self.measure_training_stability(training_results)
+                
+                # 7. Post-training metrics
+                print("7. Final language modeling metrics...")
+                final_ppl, final_loss = self.calculate_perplexity(model, test_loader, max_batches=100)
+                final_lm_metrics = self.calculate_enhanced_language_metrics(model, test_loader, max_batches=100)
+                
+                # Combine into enhanced metrics
+                enhanced_metrics = EnhancedPerformanceMetrics(
+                    model_name=model_name,
+                    perplexity=final_ppl,
+                    loss=final_loss,
+                    token_accuracy=final_lm_metrics['token_accuracy'],
+                    bits_per_byte=final_lm_metrics['bits_per_byte'],
+                    
+                    memory_peak_mb=max([m['peak'] for m in training_results['memory_usage']]) if training_results['memory_usage'] else 0,
+                    memory_reserved_mb=max([m['reserved'] for m in training_results['memory_usage']]) if training_results['memory_usage'] else 0,
+                    memory_efficiency_ratio=mem_metrics['memory_efficiency_ratio'],
+                    throughput_tokens_per_sec=comp_metrics['throughput_tokens_per_sec'],
+                    time_per_token_ms=comp_metrics['time_per_token_ms'],
+                    estimated_flops_per_token=comp_metrics['estimated_flops_per_token'],
+                    
+                    training_time_per_epoch=np.mean(training_results['epoch_times']) if training_results['epoch_times'] else 0,
+                    gradient_norm=np.mean(training_results['gradient_norms']) if training_results['gradient_norms'] else 0,
+                    convergence_rate=stability_metrics['convergence_rate'],
+                    training_stability=stability_metrics['training_stability'],
+                    overfitting_gap=stability_metrics['overfitting_gap'],
+                    epochs_to_converge=stability_metrics['epochs_to_converge'],
+                    
+                    memory_scaling_slope=scaling_metrics['memory_scaling_slope']
+                )
+                
+                improvement = baseline_ppl - final_ppl if baseline_ppl != float('inf') and final_ppl != float('inf') else 0
+                
+                all_results[model_name] = {
+                    'enhanced_metrics': enhanced_metrics,
+                    'training_curves': training_results,
+                    'baseline_perplexity': baseline_ppl,
+                    'improvement': improvement,
+                    'memory_scaling_data': scaling_metrics['memory_scaling_data']
+                }
+                
+                print(f"COMPLETED: {model_name}")
+                print(f"  Perplexity: {baseline_ppl:.2f} -> {final_ppl:.2f} (improvement: {improvement:.2f})")
+                print(f"  Token Accuracy: {final_lm_metrics['token_accuracy']*100:.1f}%")
+                print(f"  Throughput: {comp_metrics['throughput_tokens_per_sec']:.0f} tokens/sec")
+                print(f"  Memory Efficiency: {mem_metrics['memory_efficiency_ratio']:.2f}x")
+                print(f"  Memory Scaling: {scaling_metrics['memory_scaling_slope']:.2f} MB/token")
+                
+            except Exception as e:
+                print(f"FAILED: {model_name} - {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        return all_results
+    
+    def create_enhanced_visualization(self, results):
+        """Create comprehensive enhanced visualization"""
+        
+        if not results:
+            print("No results to visualize")
+            return None
+        
+        model_names = list(results.keys())
+        
+        # Create enhanced visualization
+        fig, axes = plt.subplots(3, 4, figsize=(24, 18))
+        fig.suptitle('Enhanced Model Performance Comparison', fontsize=16, fontweight='bold')
+        
+        # Extract enhanced metrics
+        enhanced_metrics = {name: result['enhanced_metrics'] for name, result in results.items()}
+        
+        # 1. Language Modeling Performance
+        perplexities = [enhanced_metrics[name].perplexity for name in model_names]
+        token_accuracies = [enhanced_metrics[name].token_accuracy * 100 for name in model_names]
+        bpb_scores = [enhanced_metrics[name].bits_per_byte for name in model_names]
+        
+        # Filter out infinite values for plotting
+        finite_perplexities = [p if p != float('inf') else 0 for p in perplexities]
+        finite_bpb = [b if b != float('inf') else 0 for b in bpb_scores]
+        
+        axes[0, 0].bar(model_names, finite_perplexities)
+        axes[0, 0].set_title('Perplexity (Lower = Better)')
+        axes[0, 0].set_ylabel('Perplexity')
+        axes[0, 0].tick_params(axis='x', rotation=45)
+        
+        axes[0, 1].bar(model_names, token_accuracies)
+        axes[0, 1].set_title('Token Accuracy (Higher = Better)')
+        axes[0, 1].set_ylabel('Accuracy (%)')
+        axes[0, 1].tick_params(axis='x', rotation=45)
+        
+        axes[0, 2].bar(model_names, finite_bpb)
+        axes[0, 2].set_title('Bits per Byte (Lower = Better)')
+        axes[0, 2].set_ylabel('BPB')
+        axes[0, 2].tick_params(axis='x', rotation=45)
+        
+        # 2. Computational Efficiency
+        throughputs = [enhanced_metrics[name].throughput_tokens_per_sec for name in model_names]
+        memory_peaks = [enhanced_metrics[name].memory_peak_mb for name in model_names]
+        memory_efficiency = [enhanced_metrics[name].memory_efficiency_ratio for name in model_names]
+        
+        axes[0, 3].bar(model_names, throughputs)
+        axes[0, 3].set_title('Throughput (Higher = Better)')
+        axes[0, 3].set_ylabel('Tokens/sec')
+        axes[0, 3].tick_params(axis='x', rotation=45)
+        
+        axes[1, 0].bar(model_names, memory_peaks)
+        axes[1, 0].set_title('Peak Memory (Lower = Better)')
+        axes[1, 0].set_ylabel('Memory (MB)')
+        axes[1, 0].tick_params(axis='x', rotation=45)
+        
+        axes[1, 1].bar(model_names, memory_efficiency)
+        axes[1, 1].set_title('Memory Efficiency (Lower = Better)')
+        axes[1, 1].set_ylabel('Peak/Parameter Ratio')
+        axes[1, 1].tick_params(axis='x', rotation=45)
+        
+        # 3. Training Dynamics
+        convergence_rates = [enhanced_metrics[name].convergence_rate for name in model_names]
+        training_stability = [enhanced_metrics[name].training_stability for name in model_names]
+        overfitting_gaps = [enhanced_metrics[name].overfitting_gap for name in model_names]
+        
+        axes[1, 2].bar(model_names, convergence_rates)
+        axes[1, 2].set_title('Convergence Rate (Higher = Better)')
+        axes[1, 2].set_ylabel('Loss decrease/epoch')
+        axes[1, 2].tick_params(axis='x', rotation=45)
+        
+        axes[1, 3].bar(model_names, training_stability)
+        axes[1, 3].set_title('Training Stability (Higher = Better)')
+        axes[1, 3].set_ylabel('Stability Score')
+        axes[1, 3].tick_params(axis='x', rotation=45)
+        
+        axes[2, 0].bar(model_names, overfitting_gaps)
+        axes[2, 0].set_title('Overfitting Gap (Lower = Better)')
+        axes[2, 0].set_ylabel('Val Loss - Train Loss')
+        axes[2, 0].tick_params(axis='x', rotation=45)
+        
+        # 4. Memory Scaling and Additional Metrics
+        scaling_slopes = [enhanced_metrics[name].memory_scaling_slope for name in model_names]
+        finite_slopes = [s if s != float('inf') else 0 for s in scaling_slopes]
+        
+        axes[2, 1].bar(model_names, finite_slopes)
+        axes[2, 1].set_title('Memory Scaling (Lower = Better)')
+        axes[2, 1].set_ylabel('MB per token')
+        axes[2, 1].tick_params(axis='x', rotation=45)
+        
+        # 5. Training Loss Curves
+        for name in model_names:
+            if 'training_curves' in results[name]:
+                curves = results[name]['training_curves']
+                if curves['train_losses'] and curves['val_losses']:
+                    axes[2, 2].plot(curves['train_losses'], label=f'{name} (train)')
+                    axes[2, 2].plot(curves['val_losses'], '--', label=f'{name} (val)')
+        axes[2, 2].set_title('Training Curves')
+        axes[2, 2].set_ylabel('Loss')
+        axes[2, 2].set_xlabel('Epoch')
+        axes[2, 2].legend()
+        
+        # 6. Token Accuracy Over Training
+        for name in model_names:
+            if 'training_curves' in results[name]:
+                curves = results[name]['training_curves']
+                if curves.get('token_accuracies'):
+                    epochs = range(len(curves['token_accuracies']))
+                    accuracies = [acc * 100 for acc in curves['token_accuracies']]
+                    axes[2, 3].plot(epochs, accuracies, label=name)
+        axes[2, 3].set_title('Token Accuracy Over Training')
+        axes[2, 3].set_ylabel('Accuracy (%)')
+        axes[2, 3].set_xlabel('Epoch')
+        axes[2, 3].legend()
+        
+        plt.tight_layout()
+        return fig
+    
+    def print_enhanced_summary(self, results):
+        """Print comprehensive summary with all benchmarks"""
+        
+        if not results:
+            print("No results to summarize")
+            return
+        
+        print("\n" + "="*100)
+        print("ENHANCED BENCHMARK SUMMARY")
+        print("="*100)
+        
+        # Create formatted table
+        headers = ['Model', 'Perplexity', 'Token Acc%', 'BPB', 'Throughput', 'Memory MB', 
+                  'Mem Eff', 'Convergence', 'Stability', 'Mem Scaling']
+        
+        print(f"{'Model':<20} {'PPL':<8} {'Acc%':<6} {'BPB':<8} {'Tok/s':<8} {'Mem':<8} {'Eff':<6} {'Conv':<8} {'Stab':<8} {'Scale':<8}")
+        print("-" * 95)
+        
+        for name, result in results.items():
+            metrics = result['enhanced_metrics']
+            
+            ppl = f"{metrics.perplexity:.1f}" if metrics.perplexity != float('inf') else "inf"
+            acc = f"{metrics.token_accuracy*100:.1f}"
+            bpb = f"{metrics.bits_per_byte:.2f}" if metrics.bits_per_byte != float('inf') else "inf"
+            thr = f"{metrics.throughput_tokens_per_sec:.0f}"
+            mem = f"{metrics.memory_peak_mb:.0f}"
+            eff = f"{metrics.memory_efficiency_ratio:.1f}"
+            conv = f"{metrics.convergence_rate:.3f}"
+            stab = f"{metrics.training_stability:.1f}"
+            scale = f"{metrics.memory_scaling_slope:.2f}" if metrics.memory_scaling_slope != float('inf') else "inf"
+            
+            print(f"{name:<20} {ppl:<8} {acc:<6} {bpb:<8} {thr:<8} {mem:<8} {eff:<6} {conv:<8} {stab:<8} {scale:<8}")
+        
+        print("="*100)
+        print("\nMETRIC EXPLANATIONS:")
+        print("PPL = Perplexity (language modeling quality, lower better)")
+        print("Acc% = Token prediction accuracy (higher better)")  
+        print("BPB = Bits per byte (compression efficiency, lower better)")
+        print("Tok/s = Inference throughput (higher better)")
+        print("Mem = Peak memory usage in MB (lower better)")
+        print("Eff = Memory efficiency ratio (lower better)")
+        print("Conv = Convergence rate (loss improvement/epoch, higher better)")
+        print("Stab = Training stability (higher better)")
+        print("Scale = Memory scaling slope MB/token (lower better)")
+        
+        # Performance comparison insights
+        print("\n" + "="*100)
+        print("KEY INSIGHTS:")
+        print("="*100)
+        
+        reversible_models = [name for name in results.keys() if 'reversible' in name.lower()]
+        standard_models = [name for name in results.keys() if 'reversible' not in name.lower()]
+        
+        if reversible_models and standard_models:
+            # Compare best of each type
+            best_reversible = min(reversible_models, 
+                                key=lambda x: results[x]['enhanced_metrics'].perplexity)
+            best_standard = min(standard_models,
+                              key=lambda x: results[x]['enhanced_metrics'].perplexity)
+            
+            rev_metrics = results[best_reversible]['enhanced_metrics']
+            std_metrics = results[best_standard]['enhanced_metrics']
+            
+            print(f"BEST REVERSIBLE ({best_reversible}) vs BEST STANDARD ({best_standard}):")
+            print(f"  Perplexity: {rev_metrics.perplexity:.2f} vs {std_metrics.perplexity:.2f}")
+            print(f"  Token Accuracy: {rev_metrics.token_accuracy*100:.1f}% vs {std_metrics.token_accuracy*100:.1f}%")
+            print(f"  Throughput: {rev_metrics.throughput_tokens_per_sec:.0f} vs {std_metrics.throughput_tokens_per_sec:.0f} tokens/sec")
+            print(f"  Memory Efficiency: {rev_metrics.memory_efficiency_ratio:.2f}x vs {std_metrics.memory_efficiency_ratio:.2f}x")
+            print(f"  Memory Scaling: {rev_metrics.memory_scaling_slope:.2f} vs {std_metrics.memory_scaling_slope:.2f} MB/token")
+            print(f"  Training Stability: {rev_metrics.training_stability:.2f} vs {std_metrics.training_stability:.2f}")
+        
+        # Memory efficiency insights
+        best_memory = min(results.keys(), key=lambda x: results[x]['enhanced_metrics'].memory_peak_mb)
+        best_throughput = max(results.keys(), key=lambda x: results[x]['enhanced_metrics'].throughput_tokens_per_sec)
+        best_accuracy = max(results.keys(), key=lambda x: results[x]['enhanced_metrics'].token_accuracy)
+        
+        print(f"\nBEST PERFORMERS:")
+        print(f"  Memory Efficiency: {best_memory}")
+        print(f"  Throughput: {best_throughput}")
+        print(f"  Token Accuracy: {best_accuracy}")
+    
+    def save_enhanced_results(self, results, filename='enhanced_qwen_results.json'):
+        """Save enhanced results with all benchmarks"""
+        
+        if not results:
+            print("No results to save")
+            return
+        
+        serializable_results = {}
+        for name, result in results.items():
+            serializable_results[name] = {
+                'enhanced_metrics': result['enhanced_metrics'].__dict__,
+                'baseline_perplexity': result['baseline_perplexity'],
+                'improvement': result['improvement'],
+                'memory_scaling_data': result['memory_scaling_data'],
+                'training_curves': {
+                    k: v for k, v in result['training_curves'].items()
+                    if k != 'memory_usage'
+                }
+            }
+        
+        with open(filename, 'w') as f:
+            json.dump(serializable_results, f, indent=2)
+        
+        print(f"Enhanced results saved to {filename}")
+
+
+# MAIN TESTING SCRIPT - ENWIK8 VERSION
+# ====================================
+
+if __name__ == "__main__":
+    # Create enhanced tester
+    tester = ReversibleQwenPerformanceTester()
+    
+    print("Running ENHANCED ENWIK8 Character-Level Benchmarking...")
+    
+    # Run enhanced comprehensive test with enwik8
+    results = tester.run_comprehensive_test_enwik8(
+        seq_len=512,  # Good sequence length for enwik8
+        use_enwik8=True
+    )
+    
+    if results:
+        # Print enhanced summary
+        tester.print_enhanced_summary(results)
+        
+        # Create enhanced visualization
+        fig = tester.create_enhanced_visualization(results)
+        if fig:
+            plt.savefig('enhanced_reversible_qwen_enwik8_comparison.png', dpi=300, bbox_inches='tight')
+            plt.show()
+            print("Enhanced enwik8 visualization saved!")
+        
+        # Save enhanced results
+        tester.save_enhanced_results(results, 'enhanced_enwik8_results.json')
+        
+        print("\nENHANCED ENWIK8 benchmarking completed successfully!")
+        
+        # Report enwik8-specific metrics
+        print("\n" + "="*60)
+        print("ENWIK8 CHARACTER-LEVEL RESULTS SUMMARY")
+        print("="*60)
+        
+        for model_name, result in results.items():
+            bpc = result['bits_per_character']
+            ppl = result['enhanced_metrics'].perplexity
+            mem = result['enhanced_metrics'].memory_peak_mb
+            
+            print(f"{model_name}:")
+            print(f"  Bits per Character: {bpc:.3f}")
+            print(f"  Perplexity: {ppl:.2f}")
+            print(f"  Memory Peak: {mem:.1f} MB")
+            print()
+        
+        # Find best performing model
+        best_model = min(results.keys(), key=lambda x: results[x]['bits_per_character'])
+        best_bpc = results[best_model]['bits_per_character']
+        print(f"🏆 Best Model: {best_model} with {best_bpc:.3f} bits/char")
+        
+    else:
+        print("No results generated - check errors above")
+        
+    # Run advanced benchmarks with enwik8 focus
+    if results:
+        print("\n" + "="*60)
+        print("RUNNING ADVANCED BENCHMARKS WITH ENWIK8")
+        print("="*60)
+        
+        try:
+            from advanced_benchmarks import run_advanced_benchmarks_with_existing_models
+            
+            # Run advanced benchmarks - these will include enwik8 evaluation
+            advanced_results = run_advanced_benchmarks_with_existing_models(tester)
+            
+            if advanced_results:
+                print("🎉 Advanced enwik8 benchmarking completed!")
+                
+                # Compare enwik8 results specifically
+                print("\nENWIK8 ADVANCED RESULTS:")
+                for model_name, adv_result in advanced_results.items():
+                    if 'enwik8' in adv_result:
+                        enwik8_metrics = adv_result['enwik8']
+                        print(f"{model_name}: {enwik8_metrics['bits_per_character']:.3f} bits/char")
+            
+        except Exception as e:
+            print(f"Advanced benchmarks failed: {e}")
+    
+    print("\n🚀 All enwik8 benchmarking completed!")

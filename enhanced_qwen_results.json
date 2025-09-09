@@ -1,0 +1,169 @@
+{
+  "reversible_standard": {
+    "enhanced_metrics": {
+      "model_name": "reversible_standard",
+      "perplexity": 1.0347415208816528,
+      "loss": 0.03415165293450449,
+      "token_accuracy": 0.9966666666666667,
+      "bits_per_byte": 0.04927042032677064,
+      "memory_peak_mb": 4758.076171875,
+      "memory_reserved_mb": 5306.0,
+      "memory_efficiency_ratio": 2.794399479966221,
+      "throughput_tokens_per_sec": 41610.64248483792,
+      "time_per_token_ms": 0.024032313376665115,
+      "estimated_flops_per_token": 1058589696,
+      "training_time_per_epoch": 1450.7148112773896,
+      "gradient_norm": 0.17380926492772933,
+      "convergence_rate": 0.05401855825424575,
+      "training_stability": 92.16645042844628,
+      "overfitting_gap": 0.030242555072646487,
+      "epochs_to_converge": 5,
+      "memory_scaling_slope": 0.22594996861049044,
+      "attention_sparsity": null,
+      "pruning_ratio": null,
+      "reversible_layers_used": null
+    },
+    "baseline_perplexity": 31976.54296875,
+    "improvement": 31975.50822722912,
+    "memory_scaling_data": [
+      {
+        "seq_length": 128,
+        "peak_memory_mb": 1825.9677734375,
+        "memory_per_token": 14.265373229980469
+      },
+      {
+        "seq_length": 256,
+        "peak_memory_mb": 1859.8447265625,
+        "memory_per_token": 7.265018463134766
+      },
+      {
+        "seq_length": 512,
+        "peak_memory_mb": 1913.7236328125,
+        "memory_per_token": 3.737741470336914
+      }
+    ],
+    "training_curves": {
+      "train_losses": [
+        0.2719234097153227,
+        0.02426556372600142,
+        0.017122963943023265,
+        0.005893360298620572,
+        0.0018306184440939181
+      ],
+      "val_losses": [
+        0.02629955376808842,
+        0.02457442955346778,
+        0.027053261214556795,
+        0.030978444730862975,
+        0.032073173516740404
+      ],
+      "epoch_times": [
+        1444.9021887779236,
+        1463.6126823425293,
+        1442.35688829422,
+        1442.3565182685852,
+        1460.3457787036896
+      ],
+      "gradient_norms": [
+        0.3342168213127235,
+        0.11987185845479667,
+        0.18629587921909307,
+        0.1480597107285787,
+        0.08060205492345461
+      ],
+      "token_accuracies": [
+        0.996656346749226,
+        0.9968214654282765,
+        0.9965737874097007,
+        0.9965737874097007,
+        0.9967801857585139
+      ]
+    }
+  },
+  "non_reversible_standard": {
+    "enhanced_metrics": {
+      "model_name": "non_reversible_standard",
+      "perplexity": 1.0302780866622925,
+      "loss": 0.029828778902689614,
+      "token_accuracy": 0.9968627450980392,
+      "bits_per_byte": 0.04303383139868364,
+      "memory_peak_mb": 7028.1201171875,
+      "memory_reserved_mb": 7940.0,
+      "memory_efficiency_ratio": 2.3487671535565173,
+      "throughput_tokens_per_sec": 27155.975093450143,
+      "time_per_token_ms": 0.0368243083357811,
+      "estimated_flops_per_token": 1723948032,
+      "training_time_per_epoch": 1706.2227110465367,
+      "gradient_norm": 0.22618457514308624,
+      "convergence_rate": 0.05670082268669372,
+      "training_stability": 66.53657630554206,
+      "overfitting_gap": 0.022668501303552028,
+      "epochs_to_converge": 6,
+      "memory_scaling_slope": 0.2256709507533479,
+      "attention_sparsity": null,
+      "pruning_ratio": null,
+      "reversible_layers_used": null
+    },
+    "baseline_perplexity": 31599.6953125,
+    "improvement": 31598.665034413338,
+    "memory_scaling_data": [
+      {
+        "seq_length": 128,
+        "peak_memory_mb": 2519.3759765625,
+        "memory_per_token": 19.68262481689453
+      },
+      {
+        "seq_length": 256,
+        "peak_memory_mb": 2552.5029296875,
+        "memory_per_token": 9.970714569091797
+      },
+      {
+        "seq_length": 512,
+        "peak_memory_mb": 2606.8818359375,
+        "memory_per_token": 5.09156608581543
+      }
+    ],
+    "training_curves": {
+      "train_losses": [
+        0.34771758714553674,
+        0.029312160308472113,
+        0.02448796930927531,
+        0.020514928534626584,
+        0.014628893727812006,
+        0.00751265102537442
+      ],
+      "val_losses": [
+        0.03198291417599345,
+        0.02746535746458297,
+        0.025474996965688963,
+        0.027473740580414113,
+        0.029133505672992516,
+        0.030181152328926448
+      ],
+      "epoch_times": [
+        1710.9361639022827,
+        1707.3133885860443,
+        1702.0355627536774,
+        1698.3187069892883,
+        1715.0554246902466,
+        1703.6770193576813
+      ],
+      "gradient_norms": [
+        0.6312945881315476,
+        0.19313189854683804,
+        0.13544629573328718,
+        0.13163672368642237,
+        0.14222276554331814,
+        0.12337517921710406
+      ],
+      "token_accuracies": [
+        0.9957481940144479,
+        0.9963673890608875,
+        0.9964912280701754,
+        0.9965737874097007,
+        0.9963673890608875,
+        0.9966150670794633
+      ]
+    }
+  }
+}
