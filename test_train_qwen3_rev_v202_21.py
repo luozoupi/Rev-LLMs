@@ -8,6 +8,7 @@ training stability, and bits-per-byte metrics.
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import OneCycleLR, CosineAnnealingLR
@@ -18,6 +19,7 @@ from typing import Dict, List, Tuple, Optional
 import json
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+from datasets import load_dataset
 from tqdm import tqdm
 
 import gzip
@@ -257,7 +259,7 @@ class ReversibleQwenPerformanceTester:
         
         return data
     
-    def run_comprehensive_test_enwik8(self, seq_len=512, use_enwik8=True):
+    def run_comprehensive_test_enwik8(self, seq_len=512, use_enwik8=True, batch_size=256, num_workers: Optional[int] = None):
         """Enhanced comprehensive test with enwik8 character-level modeling"""
         
         print("="*60)
@@ -278,10 +280,14 @@ class ReversibleQwenPerformanceTester:
                 print(f"Dataset sizes: Train={len(train_dataset)}, Val={len(val_dataset)}, Test={len(test_dataset)}")
                 print(f"Vocabulary size: {vocab_size} (character-level)")
                 
-                # Use smaller batch sizes for character-level training
-                train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, drop_last=True)
-                val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, drop_last=False)
-                test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, drop_last=False)
+                # High-throughput DataLoaders (larger batches acceptable)
+                nw = num_workers if num_workers is not None else max(1, min(8, os.cpu_count() or 1))
+                common = dict(pin_memory=torch.cuda.is_available(), num_workers=nw, persistent_workers=(nw > 0))
+                if nw > 0:
+                    common["prefetch_factor"] = 4
+                train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **common)
+                val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False, **common)
+                test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, **common)
                 
             except Exception as e:
                 print(f"Enwik8 loading failed: {e}")
@@ -295,9 +301,13 @@ class ReversibleQwenPerformanceTester:
             val_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=200)
             test_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=300)
             
-            train_loader = DataLoader(train_data, batch_size=8, shuffle=True, drop_last=True)
-            val_loader = DataLoader(val_data, batch_size=8, shuffle=False)
-            test_loader = DataLoader(test_data, batch_size=8, shuffle=False)
+            nw = num_workers if num_workers is not None else max(1, min(8, os.cpu_count() or 1))
+            common = dict(pin_memory=torch.cuda.is_available(), num_workers=nw, persistent_workers=(nw > 0))
+            if nw > 0:
+                common["prefetch_factor"] = 4
+            train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, **common)
+            val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, **common)
+            test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, **common)
             vocab_size = 256
         
         # Setup models with character-level vocabulary
@@ -305,7 +315,7 @@ class ReversibleQwenPerformanceTester:
         models = self.setup_models_for_comparison(
             vocab_size=vocab_size,  # 256 for character-level
             hidden_size=512*2,  # Can be larger since vocab is smaller
-            num_layers=6,     # Deeper models for character-level
+            num_layers=6+4,     # Deeper models for character-level
             num_heads=8
         )
         
@@ -428,7 +438,7 @@ class ReversibleQwenPerformanceTester:
             'patience': 8,
             'use_amp': True,
             'gradient_clip_norm': 1.0,
-            'batch_size': 32,  # Can use larger batches with smaller vocab
+            'batch_size': 64,  # Can use larger batches with smaller vocab
             'accumulation_steps': 2
         }
 
@@ -1101,7 +1111,7 @@ class ReversibleQwenPerformanceTester:
                         optimizer.zero_grad()
                         total_grad_norm += grad_norm.item()
                     
-                    if batch_idx % 30 == 0:
+                    if batch_idx % 32 == 0:
                         current_lr = scheduler.get_last_lr()[0] if hasattr(scheduler, 'get_last_lr') else config['learning_rate']
                         train_acc = train_correct / train_total * 100 if train_total > 0 else 0
                         print(f"Epoch {epoch+1}, Batch {batch_idx}: Loss: {loss.item():.4f}, "

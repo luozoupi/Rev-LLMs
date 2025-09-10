@@ -199,17 +199,12 @@ class ReversibleQwenPerformanceTester:
     def get_optimized_training_config(self, model_type="reversible"):
         """Get optimized training configuration based on model type"""
         
-        if "reversible" in model_type.lower():
-            return self.get_wikitext_training_config()
-        else:
-            config = self.get_wikitext_training_config()
-            config.update({
-                'epochs': 30,
-                'learning_rate': 0.0001,
-                'early_stopping_patience': 3,
-                'betas': (0.9, 0.999)
-            })
-            return config
+        # Use the same configuration for both reversible and non-reversible models for fair comparison
+        base_config = self.get_wikitext_training_config()
+        base_config.update({
+            'epochs': 30,  # Give both models the same number of epochs
+        })
+        return base_config
         
     def initialize_model_weights(self, model, model_type="reversible"):
         """Proper initialization for different model types"""
@@ -268,7 +263,7 @@ class ReversibleQwenPerformanceTester:
                                     num_layers=4, num_heads=8):
             """Setup different model configurations for comparison"""
             
-            from qwen3_reversible_02 import create_reversible_qwen3_model
+            from qwen3_reversible_02_2 import create_reversible_qwen3_model
             
             models = {}
             
@@ -289,7 +284,9 @@ class ReversibleQwenPerformanceTester:
                         attention_type=attention_type,
                         use_reversible=use_reversible,
                         reverse_thres=256 if use_reversible else 999999,
-                        # Remove candidate selection and sparse attention parameters
+                        # Add missing parameters from working version
+                        candidate_pr_ratio=0.7,
+                        candidate_top_k=32,
                         intermediate_size=hidden_size * 4,
                         max_position_embeddings=2048,
                         rms_norm_eps=1e-6
@@ -888,8 +885,8 @@ class ReversibleQwenPerformanceTester:
         print("Setting up models...")
         models = self.setup_models_for_comparison(
             vocab_size=vocab_size,
-            hidden_size=512*2,
-            num_layers=4+2, #was 4 in the first place
+            hidden_size=512,  # Keep same as working v202_2f
+            num_layers=4,     # Keep same as working v202_2f
             num_heads=8
         )
         

@@ -15,7 +15,18 @@ from transformers import AutoTokenizer
 from typing import Dict, List, Tuple, Optional, Union
 import json
 from dataclasses import dataclass
-from sklearn.metrics import accuracy_score, f1_score, matthews_corrcoef, pearsonr, spearmanr
+from sklearn.metrics import accuracy_score, f1_score, matthews_corrcoef
+try:
+    from scipy.stats import pearsonr, spearmanr
+except ImportError:
+    # Fallback implementation
+    def pearsonr(x, y):
+        import numpy as np
+        return (np.corrcoef(x, y)[0, 1], 0.0)
+    
+    def spearmanr(x, y):
+        import numpy as np
+        return (np.corrcoef(x, y)[0, 1], 0.0)
 import time
 
 @dataclass
