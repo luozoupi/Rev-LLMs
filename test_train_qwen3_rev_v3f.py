@@ -199,12 +199,20 @@ class ReversibleQwenPerformanceTester:
     def get_optimized_training_config(self, model_type="reversible"):
         """Get optimized training configuration based on model type"""
         
-        # Use the same configuration for both reversible and non-reversible models for fair comparison
+        # Match older v202_2f behavior: shorter training for reversible, longer & lower LR for non-reversible
         base_config = self.get_wikitext_training_config()
-        base_config.update({
-            'epochs': 30,  # Give both models the same number of epochs
-        })
-        return base_config
+        if "reversible" in model_type.lower():
+            # Keep defaults (epochs=8, lr=3e-4, patience=4)
+            return base_config
+        else:
+            cfg = dict(base_config)
+            cfg.update({
+                'epochs': 30,
+                'learning_rate': 1e-4,
+                'early_stopping_patience': 3,
+                'betas': (0.9, 0.999)
+            })
+            return cfg
         
     def initialize_model_weights(self, model, model_type="reversible"):
         """Proper initialization for different model types"""
@@ -883,10 +891,11 @@ class ReversibleQwenPerformanceTester:
         
         # Setup models
         print("Setting up models...")
+        # Make model size comparable to older v202_2f defaults (hidden_size=1024, num_layers=6, heads=8)
         models = self.setup_models_for_comparison(
             vocab_size=vocab_size,
-            hidden_size=512,  # Keep same as working v202_2f
-            num_layers=4,     # Keep same as working v202_2f
+            hidden_size=1024,
+            num_layers=6,
             num_heads=8
         )
         
@@ -1187,27 +1196,59 @@ class ReversibleQwenPerformanceTester:
         print(f"  Token Accuracy: {best_accuracy}")
     
     def save_enhanced_results(self, results, filename='enhanced_qwen_results.json'):
-        """Save enhanced results with all benchmarks"""
+        """Save enhanced results with all benchmarks.
+
+        Accepts either:
+        - A dict of per-model results: {model_name: {enhanced_metrics, ...}}
+        - A final_report dict with key 'basic_performance' holding the above
+        """
         
         if not results:
             print("No results to save")
             return
         
-        serializable_results = {}
-        for name, result in results.items():
-            serializable_results[name] = {
-                'enhanced_metrics': result['enhanced_metrics'].__dict__,
-                'baseline_perplexity': result['baseline_perplexity'],
-                'improvement': result['improvement'],
-                'memory_scaling_data': result['memory_scaling_data'],
-                'training_curves': {
-                    k: v for k, v in result['training_curves'].items()
-                    if k != 'memory_usage'
+        # Detect if this is a final_report bundle
+        if isinstance(results, dict) and 'basic_performance' in results and 'enhanced_metrics' not in results:
+            base = results.get('basic_performance', {}) or {}
+            serializable_results = {}
+            for name, result in base.items():
+                if not result or 'enhanced_metrics' not in result:
+                    continue
+                serializable_results[name] = {
+                    'enhanced_metrics': getattr(result['enhanced_metrics'], '__dict__', result['enhanced_metrics']),
+                    'baseline_perplexity': result.get('baseline_perplexity'),
+                    'improvement': result.get('improvement'),
+                    'memory_scaling_data': result.get('memory_scaling_data'),
+                    'training_curves': {
+                        k: v for k, v in result.get('training_curves', {}).items()
+                        if k != 'memory_usage'
+                    }
                 }
+            payload = {
+                'basic_performance': serializable_results,
+                'scaling_analysis': results.get('scaling_analysis', {}),
+                'benchmark_summary': results.get('benchmark_summary', {})
             }
+        else:
+            # Assume it's already a per-model map
+            serializable_results = {}
+            for name, result in results.items():
+                if not result or 'enhanced_metrics' not in result:
+                    continue
+                serializable_results[name] = {
+                    'enhanced_metrics': getattr(result['enhanced_metrics'], '__dict__', result['enhanced_metrics']),
+                    'baseline_perplexity': result.get('baseline_perplexity'),
+                    'improvement': result.get('improvement'),
+                    'memory_scaling_data': result.get('memory_scaling_data'),
+                    'training_curves': {
+                        k: v for k, v in result.get('training_curves', {}).items()
+                        if k != 'memory_usage'
+                    }
+                }
+            payload = serializable_results
         
         with open(filename, 'w') as f:
-            json.dump(serializable_results, f, indent=2)
+            json.dump(payload, f, indent=2, default=str)
         
         print(f"Enhanced results saved to {filename}")
 
@@ -1241,7 +1282,7 @@ if __name__ == "__main__":
     print("-" * 60)
     
     basic_results = tester.run_comprehensive_test(
-        seq_len=512,  # Reasonable starting point
+        seq_len=1024,  # Match v202_2f (256*4)
         vocab_size=16000*2,
         use_wikitext=True
     )
@@ -1256,26 +1297,16 @@ if __name__ == "__main__":
             plt.savefig('phase1_basic_performance.png', dpi=300, bbox_inches='tight')
             print("Phase 1 visualization saved!")
         
-        # Phase 2: GLUE+ Language Understanding Benchmark
-        if BENCHMARKS_AVAILABLE:
+        # Phase 2: GLUE+ Language Understanding Benchmark (opt-in via env)
+        RUN_GLUE_PLUS = BENCHMARKS_AVAILABLE and os.environ.get('RUN_GLUE_PLUS', '0') == '1'
+        if RUN_GLUE_PLUS:
             print("\n🧠 PHASE 2: GLUE+ Language Understanding")
             print("-" * 60)
             
-            # Setup models for GLUE+ (need classification heads)
-            models_for_glue = {}
-            
-            for model_name, model in tester.setup_models_for_comparison(
+            # Use base LM models; GLUE evaluator will derive logits from LM output safely
+            models_for_glue = tester.setup_models_for_comparison(
                 vocab_size=16000, hidden_size=768, num_layers=6, num_heads=12
-            ).items():
-                # Add classification head
-                classification_model = nn.Sequential(
-                    model,
-                    nn.Linear(768, 768),
-                    nn.ReLU(),
-                    nn.Dropout(0.1),
-                    nn.Linear(768, 2)  # Binary classification for most tasks
-                )
-                models_for_glue[model_name] = classification_model.to(tester.device)
+            )
             
             if models_for_glue:
                 glue_benchmark = GLUEPlusBenchmark()
@@ -1298,8 +1329,9 @@ if __name__ == "__main__":
                     with open('glue_plus_results.json', 'w') as f:
                         json.dump(glue_results, f, indent=2, default=str)
         
-        # Phase 3: Long-Range Memory Benchmark
-        if BENCHMARKS_AVAILABLE:
+        # Phase 3: Long-Range Memory Benchmark (opt-in via env)
+        RUN_MEMORY_BENCH = BENCHMARKS_AVAILABLE and os.environ.get('RUN_MEMORY_BENCH', '0') == '1'
+        if RUN_MEMORY_BENCH:
             print("\n🧮 PHASE 3: Long-Range Memory & Context")
             print("-" * 60)
             
@@ -1457,6 +1489,6 @@ if __name__ == "__main__":
         print(f"  - phase1_basic_performance.png")
         if 'fig' in locals():
             plt.show()
-        
+    
     else:
         print("❌ No results generated - check errors above")

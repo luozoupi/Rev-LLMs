@@ -56,12 +56,15 @@ except ImportError as e:
 
 # BLEU/ROUGE metrics
 try:
-    from datasets import load_metric
-    from evaluate import load as load_evaluate_metric
+    # Use evaluate instead of deprecated load_metric
+    import evaluate
     import nltk
     from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
     from rouge_score import rouge_scorer
-    nltk.download('punkt', quiet=True)
+    try:
+        nltk.download('punkt', quiet=True)
+    except:
+        pass
     METRICS_AVAILABLE = True
 except ImportError as e:
     print(f"Evaluation metrics not available: {e}")
@@ -211,7 +214,7 @@ class ComprehensiveBenchmarkRunner:
                         bleu_scores.append(0.0)
             
             # Calculate ROUGE scores
-            rouge_scores = {'rouge1': [], 'rouge2': [], 'rougeL': []]}
+            rouge_scores = {'rouge1': [], 'rouge2': [], 'rougeL': []}
             for pred, ref in zip(predictions, references):
                 if pred.strip():
                     try:

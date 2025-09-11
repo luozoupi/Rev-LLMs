@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "model_name": "reversible_qwen3",
+      "task_name": "text_generation",
+      "score": 0.0,
+      "metric_type": "BLEU-4",
+      "inference_time_ms": 0.0008344650268554688,
+      "error": null
+    },
+    {
+      "model_name": "reversible_qwen3",
+      "task_name": "text_generation",
+      "score": 0.0,
+      "metric_type": "ROUGE-1",
+      "inference_time_ms": 0.0008344650268554688,
+      "error": null
+    },
+    {
+      "model_name": "standard_qwen3",
+      "task_name": "text_generation",
+      "score": 0.0,
+      "metric_type": "BLEU-4",
+      "inference_time_ms": 0.000476837158203125,
+      "error": null
+    },
+    {
+      "model_name": "standard_qwen3",
+      "task_name": "text_generation",
+      "score": 0.0,
+      "metric_type": "ROUGE-1",
+      "inference_time_ms": 0.000476837158203125,
+      "error": null
+    },
+    {
+      "model_name": "reversible_qwen3",
+      "task_name": "sst2",
+      "score": 0.4,
+      "metric_type": "accuracy",
+      "inference_time_ms": 27.3514986038208,
+      "error": null
+    },
+    {
+      "model_name": "standard_qwen3",
+      "task_name": "sst2",
+      "score": 0.4,
+      "metric_type": "accuracy",
+      "inference_time_ms": 5.239462852478027,
+      "error": null
+    },
+    {
+      "model_name": "reversible_qwen3",
+      "task_name": "cola",
+      "score": 0.4,
+      "metric_type": "accuracy",
+      "inference_time_ms": 5.5724382400512695,
+      "error": null
+    },
+    {
+      "model_name": "standard_qwen3",
+      "task_name": "cola",
+      "score": 0.4,
+      "metric_type": "accuracy",
+      "inference_time_ms": 5.219221115112305,
+      "error": null
+    },
+    {
+      "model_name": "reversible_qwen3",
+      "task_name": "mrpc",
+      "score": 0.2,
+      "metric_type": "accuracy",
+      "inference_time_ms": 5.574893951416016,
+      "error": null
+    },
+    {
+      "model_name": "standard_qwen3",
+      "task_name": "mrpc",
+      "score": 0.2,
+      "metric_type": "accuracy",
+      "inference_time_ms": 5.199933052062988,
+      "error": null
+    }
+  ]
+}
