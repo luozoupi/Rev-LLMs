@@ -8,7 +8,6 @@ training stability, and bits-per-byte metrics.
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import OneCycleLR, CosineAnnealingLR
@@ -19,7 +18,6 @@ from typing import Dict, List, Tuple, Optional
 import json
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from datasets import load_dataset
 from tqdm import tqdm
 
 import gzip
@@ -259,7 +257,7 @@ class ReversibleQwenPerformanceTester:
         
         return data
     
-    def run_comprehensive_test_enwik8(self, seq_len=512, use_enwik8=True, batch_size=256, num_workers: Optional[int] = None):
+    def run_comprehensive_test_enwik8(self, seq_len=512, use_enwik8=True):
         """Enhanced comprehensive test with enwik8 character-level modeling"""
         
         print("="*60)
@@ -280,14 +278,10 @@ class ReversibleQwenPerformanceTester:
                 print(f"Dataset sizes: Train={len(train_dataset)}, Val={len(val_dataset)}, Test={len(test_dataset)}")
                 print(f"Vocabulary size: {vocab_size} (character-level)")
                 
-                # High-throughput DataLoaders (larger batches acceptable)
-                nw = num_workers if num_workers is not None else max(1, min(8, os.cpu_count() or 1))
-                common = dict(pin_memory=torch.cuda.is_available(), num_workers=nw, persistent_workers=(nw > 0))
-                if nw > 0:
-                    common["prefetch_factor"] = 4
-                train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, **common)
-                val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False, **common)
-                test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, **common)
+                # Use smaller batch sizes for character-level training
+                train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
+                val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, drop_last=False)
+                test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, drop_last=False)
                 
             except Exception as e:
                 print(f"Enwik8 loading failed: {e}")
@@ -301,13 +295,9 @@ class ReversibleQwenPerformanceTester:
             val_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=200)
             test_data = self.create_test_dataset(vocab_size=256, seq_len=seq_len, num_samples=300)
             
-            nw = num_workers if num_workers is not None else max(1, min(8, os.cpu_count() or 1))
-            common = dict(pin_memory=torch.cuda.is_available(), num_workers=nw, persistent_workers=(nw > 0))
-            if nw > 0:
-                common["prefetch_factor"] = 4
-            train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, **common)
-            val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, **common)
-            test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, **common)
+            train_loader = DataLoader(train_data, batch_size=32, shuffle=True, drop_last=True)
+            val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
+            test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
             vocab_size = 256
         
         # Setup models with character-level vocabulary

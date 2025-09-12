@@ -48,7 +48,7 @@ except ImportError as e:
 
 # Import your model creation functions
 try:
-    from qwen3_reversible_02_2 import create_reversible_qwen3_model
+    from qwen3_reversible_02_3 import create_reversible_qwen3_model
     MODEL_CREATION_AVAILABLE = True
 except ImportError as e:
     print(f"Model creation not available: {e}")
@@ -303,9 +303,19 @@ class ComprehensiveBenchmarkRunner:
                 print("ADVANCED DOMAIN-SPECIFIC BENCHMARK")
                 print("="*60)
                 
-                # This would need to be implemented in your advanced_benchmarks.py
-                # For now, we'll skip it
-                print("Advanced benchmarks not yet implemented")
+                # Run comprehensive advanced benchmarks
+                advanced_results = self.advanced_benchmark.run_comprehensive_benchmark(
+                    models, quick_test=True
+                )
+                all_results['advanced_domain'] = advanced_results
+                
+                print("\nAdvanced Benchmark Results:")
+                for model_name, results in advanced_results.items():
+                    print(f"  {model_name}:")
+                    if 'long_range' in results:
+                        print(f"    Long-range accuracy: {results['long_range'].get('accuracy', 0):.3f}")
+                    if 'memory_stress' in results:
+                        print(f"    Memory stress passed: {len(results['memory_stress'])}")
                 
             except Exception as e:
                 print(f"Advanced benchmark failed: {e}")

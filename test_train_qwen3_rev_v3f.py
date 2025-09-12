@@ -180,7 +180,7 @@ class ReversibleQwenPerformanceTester:
         """Optimized config for WikiText training"""
         return {
             'epochs': 8,
-            'learning_rate': 0.0003,
+            'learning_rate': 1e-4,
             'min_learning_rate': 1e-6,
             'scheduler_type': 'cosine',
             'warmup_ratio': 0.1,
@@ -190,9 +190,9 @@ class ReversibleQwenPerformanceTester:
             'gradient_accumulation_steps': 2,
             'use_amp': True,
             'amp_dtype': torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
-            'early_stopping_patience': 4,
-            'early_stopping_min_delta': 0.001,
-            'betas': (0.9, 0.95),
+            'early_stopping_patience': 10,
+            'early_stopping_min_delta': 0.0001,
+            'betas': (0.9, 0.99),
             'eps': 1e-8
         }
     
@@ -201,18 +201,19 @@ class ReversibleQwenPerformanceTester:
         
         # Match older v202_2f behavior: shorter training for reversible, longer & lower LR for non-reversible
         base_config = self.get_wikitext_training_config()
-        if "reversible" in model_type.lower():
-            # Keep defaults (epochs=8, lr=3e-4, patience=4)
-            return base_config
-        else:
-            cfg = dict(base_config)
-            cfg.update({
-                'epochs': 30,
-                'learning_rate': 1e-4,
-                'early_stopping_patience': 3,
-                'betas': (0.9, 0.999)
-            })
-            return cfg
+        return base_config
+        # if "reversible" in model_type.lower():
+        #     # Keep defaults (epochs=8, lr=3e-4, patience=4)
+        #     return base_config
+        # else:
+        #     cfg = dict(base_config)
+        #     cfg.update({
+        #         'epochs': 30,
+        #         'learning_rate': 1e-4,
+        #         'early_stopping_patience': 10,
+        #         'betas': (0.9, 0.999)
+        #     })
+        #     return cfg
         
     def initialize_model_weights(self, model, model_type="reversible"):
         """Proper initialization for different model types"""
@@ -894,8 +895,8 @@ class ReversibleQwenPerformanceTester:
         # Make model size comparable to older v202_2f defaults (hidden_size=1024, num_layers=6, heads=8)
         models = self.setup_models_for_comparison(
             vocab_size=vocab_size,
-            hidden_size=1024,
-            num_layers=6,
+            hidden_size=1024*2,
+            num_layers=6+2,
             num_heads=8
         )
         
