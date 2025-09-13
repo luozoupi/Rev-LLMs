@@ -1,0 +1,55 @@
+# Quick Evaluation Configuration for Fast Testing
+# ==============================================
+
+# Model configurations (reduced for speed)
+model_names:
+  - "reversible_qwen3"
+  - "standard_qwen3"
+
+model_sizes:
+  - "small"    # Only small models for quick testing
+
+# Task configurations (minimal set)
+tasks:
+  - "sst2"     # Single task for quick testing
+  - "cola"
+
+max_samples_per_task: 100  # Reduced samples
+few_shot_k: 2
+
+# Training configurations (reduced)
+num_epochs: 1              # Single epoch
+learning_rate: 5.0e-4      # Slightly higher LR for faster convergence
+batch_size: 8              # Smaller batch size
+gradient_accumulation_steps: 2
+max_grad_norm: 1.0
+warmup_ratio: 0.05         # Reduced warmup
+
+# Evaluation configurations
+eval_strategy: "steps"
+eval_steps: 50             # More frequent evaluation
+save_strategy: "no"        # Don't save checkpoints
+save_steps: 1000
+
+# Memory and efficiency testing (reduced)
+memory_test_lengths:
+  - 512
+  - 1024
+
+efficiency_metrics:
+  - "training_time"
+  - "memory_usage"
+
+# Output configuration
+output_dir: "quick_evaluation_results"
+save_models: false
+detailed_analysis: false   # Skip detailed analysis for speed
+
+# Hardware configuration
+device: "cuda"
+mixed_precision: true
+use_gradient_checkpointing: true
+
+# Reproducibility (single seed for speed)
+seeds:
+  - 42

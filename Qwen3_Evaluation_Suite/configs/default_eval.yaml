@@ -1,0 +1,63 @@
+# Default Evaluation Configuration for Qwen3 Models
+# ================================================
+
+# Model configurations
+model_names:
+  - "reversible_qwen3"
+  - "standard_qwen3"
+
+model_sizes:
+  - "small"    # 512d hidden, 8 layers
+  - "medium"   # 1024d hidden, 16 layers
+
+# Task configurations
+tasks:
+  - "sst2"     # Sentiment analysis
+  - "cola"     # Linguistic acceptability
+  - "mrpc"     # Paraphrase detection
+  - "rte"      # Textual entailment
+
+max_samples_per_task: 1000
+few_shot_k: 4
+
+# Training configurations
+num_epochs: 3
+learning_rate: 3.0e-4
+batch_size: 16
+gradient_accumulation_steps: 4
+max_grad_norm: 1.0
+warmup_ratio: 0.1
+
+# Evaluation configurations
+eval_strategy: "steps"
+eval_steps: 100
+save_strategy: "steps"
+save_steps: 500
+
+# Memory and efficiency testing
+memory_test_lengths:
+  - 512
+  - 1024
+  - 2048
+  - 4096
+
+efficiency_metrics:
+  - "training_time"
+  - "memory_usage"
+  - "inference_speed"
+
+# Output configuration
+output_dir: "evaluation_results"
+save_models: false
+detailed_analysis: true
+
+# Hardware configuration
+device: "cuda"
+mixed_precision: true
+use_gradient_checkpointing: true
+
+# Reproducibility
+seeds:
+  - 42
+  - 123
+  - 456

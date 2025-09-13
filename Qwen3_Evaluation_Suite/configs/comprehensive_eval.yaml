@@ -1,0 +1,85 @@
+# Comprehensive Evaluation Configuration (Similar to DiZO Scale)
+# =============================================================
+
+# Model configurations (multiple scales like DiZO)
+model_names:
+  - "reversible_qwen3"
+  - "standard_qwen3"
+
+model_sizes:
+  - "small"    # 512d hidden, 8 layers (~13M params)
+  - "medium"   # 1024d hidden, 16 layers (~110M params)
+  - "large"    # 2048d hidden, 24 layers (~775M params)
+
+# Task configurations (comprehensive GLUE+ suite)
+tasks:
+  - "sst2"     # Sentiment analysis
+  - "cola"     # Linguistic acceptability
+  - "mrpc"     # Paraphrase detection
+  - "rte"      # Textual entailment
+  - "qnli"     # Question answering NLI
+  - "qqp"      # Quora question pairs
+  - "mnli"     # Multi-genre NLI
+  - "memory_stress"  # Custom long-range task
+
+max_samples_per_task: 5000   # More samples for robust evaluation
+few_shot_k: 8
+
+# Training configurations (comprehensive)
+num_epochs: 5
+learning_rate: 2.0e-4        # Conservative learning rate
+batch_size: 32               # Larger batch size
+gradient_accumulation_steps: 8
+max_grad_norm: 0.5          # Tighter gradient clipping
+warmup_ratio: 0.15          # More warmup
+
+# Evaluation configurations
+eval_strategy: "steps"
+eval_steps: 200
+save_strategy: "steps"
+save_steps: 1000
+load_best_model_at_end: true
+
+# Memory and efficiency testing (comprehensive)
+memory_test_lengths:
+  - 256
+  - 512
+  - 1024
+  - 2048
+  - 4096
+  - 8192
+
+efficiency_metrics:
+  - "training_time"
+  - "memory_usage"
+  - "inference_speed"
+  - "convergence_rate"
+  - "parameter_efficiency"
+
+# Output configuration
+output_dir: "comprehensive_evaluation_results"
+save_models: true           # Save best models
+detailed_analysis: true
+
+# Hardware configuration
+device: "cuda"
+mixed_precision: true
+use_gradient_checkpointing: true
+
+# Reproducibility (multiple seeds for statistical significance)
+seeds:
+  - 42
+  - 123
+  - 456
+  - 789
+  - 999
+
+# Advanced configurations
+zero_order_optimization: false  # Enable ZO optimization like DiZO
+weight_decay: 0.01
+adam_epsilon: 1.0e-8
+max_steps: -1                   # Use epochs instead
+
+# Statistical analysis
+compute_statistical_significance: true
+confidence_interval: 0.95
