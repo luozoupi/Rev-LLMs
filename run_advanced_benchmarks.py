@@ -48,7 +48,7 @@ except ImportError as e:
 
 # Import your model creation functions
 try:
-    from qwen3_reversible_02_3 import create_reversible_qwen3_model
+    from qwen3_reversible_02_2 import create_reversible_qwen3_model
     MODEL_CREATION_AVAILABLE = True
 except ImportError as e:
     print(f"Model creation not available: {e}")

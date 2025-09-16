@@ -1,0 +1,170 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {}
+    },
+    "cola": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {}
+    },
+    "mrpc": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {}
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5091743119266054,
+        "inference_time": 9.514296000156927,
+        "num_samples": 872,
+        "difficulty": "easy"
+      },
+      "cola": {
+        "score": 0.0,
+        "inference_time": 9.435863971710205,
+        "num_samples": 1000,
+        "difficulty": "medium"
+      },
+      "mrpc": {
+        "score": 0.8122270742358079,
+        "inference_time": 9.487281827365651,
+        "num_samples": 408,
+        "difficulty": "medium"
+      },
+      "_summary": {
+        "overall_score": 0.6607006930812067,
+        "weighted_score": 0.8637574616401587,
+        "tasks_completed": 2,
+        "total_tasks": 3
+      }
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.5091743119266054,
+        "inference_time": 9.43878183671094,
+        "num_samples": 872,
+        "difficulty": "easy"
+      },
+      "cola": {
+        "score": 0.0,
+        "inference_time": 9.440238952636719,
+        "num_samples": 1000,
+        "difficulty": "medium"
+      },
+      "mrpc": {
+        "score": 0.8122270742358079,
+        "inference_time": 9.4794794624927,
+        "num_samples": 408,
+        "difficulty": "medium"
+      },
+      "_summary": {
+        "overall_score": 0.6607006930812067,
+        "weighted_score": 0.8637574616401587,
+        "tasks_completed": 2,
+        "total_tasks": 3
+      }
+    }
+  },
+  "memory": {
+    "reversible_qwen3": {
+      "phase_1": {
+        "copy_task": {
+          "perplexity": 35697.727908712004,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 1392.594248046875,
+          "sequence_length": 1024,
+          "memory_span": 512,
+          "difficulty": "medium",
+          "samples_evaluated": 50
+        },
+        "associative_recall": {
+          "perplexity": 28397.171407207603,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 1696.578681640625,
+          "sequence_length": 2048,
+          "memory_span": 1000,
+          "difficulty": "hard",
+          "samples_evaluated": 50
+        }
+      },
+      "phase_1_summary": {
+        "avg_perplexity": 32047.449657959805,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 1544.58646484375,
+        "tasks_completed": 2
+      },
+      "phase_2": {
+        "needle_in_haystack": {
+          "perplexity": 35113.33226300699,
+          "token_accuracy": 2.500625156289072e-05,
+          "sequence_accuracy": 2.5006251562890728e-05,
+          "avg_memory_mb": 2776.177060546875,
+          "sequence_length": 4096,
+          "memory_span": 2000,
+          "difficulty": "extreme",
+          "samples_evaluated": 50
+        },
+        "long_arithmetic": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      },
+      "phase_2_summary": {
+        "avg_perplexity": 35113.33226300699,
+        "avg_token_accuracy": 2.500625156289072e-05,
+        "avg_sequence_accuracy": 2.5006251562890728e-05,
+        "avg_memory_mb": 2776.177060546875,
+        "tasks_completed": 1
+      },
+      "phase_3": {
+        "variable_binding": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        },
+        "narrative_coherence": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      },
+      "phase_4": {
+        "hierarchical_structure": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      }
+    },
+    "standard_qwen3": {
+      "phase_1": {
+        "copy_task": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        },
+        "associative_recall": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      },
+      "phase_2": {
+        "needle_in_haystack": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        },
+        "long_arithmetic": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      },
+      "phase_3": {
+        "variable_binding": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        },
+        "narrative_coherence": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      },
+      "phase_4": {
+        "hierarchical_structure": {
+          "error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n"
+        }
+      }
+    }
+  },
+  "advanced": {}
+}

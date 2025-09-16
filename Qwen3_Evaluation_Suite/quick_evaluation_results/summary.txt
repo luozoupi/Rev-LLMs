@@ -1,0 +1,9 @@
+Qwen3 Evaluation Suite - Summary Report
+==================================================
+
+Total models evaluated: 2
+Successful evaluations: 0
+Failed evaluations: 2
+
+Performance Gaps (Reversible - Standard):
+----------------------------------------

@@ -1,0 +1,298 @@
+(py310) yul23028@A6000:~/Reformer/reformer-pytorch/Rev-LLMs$ CUDA_VISIBLE_DEVICES=1 python test_train_qwen3_rev_v3f.py 
+================================================================================
+COMPREHENSIVE REVERSIBLE QWEN3 EVALUATION SUITE
+================================================================================
+
+🔬 PHASE 1: Basic Performance & Memory Efficiency
+------------------------------------------------------------
+============================================================
+ENHANCED REVERSIBLE QWEN3 COMPREHENSIVE BENCHMARKS
+============================================================
+Loading WikiText dataset...
+Loaded WikiText: Train=36718, Val=3760, Test=4358
+Creating WikiText tokenizer...
+[00:00:00] Pre-processing sequences       █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████ 19832    /        0Used 23547 texts for tokenizer training
+[00:00:00] Pre-processing sequences       █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████ 0        /        0Actual vocabulary size: 32000
+Creating WikiText datasets...
+Special tokens - pad: 1, unk: 0, bos: 2, eos: 3
+Processing 20887 valid texts from 36718 total texts...
+Processing WikiText: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20887/20887 [00:01<00:00, 12048.75it/s]
+Created WikiText dataset with 0 sequences
+WikiText loading failed: No valid sequences created! Check tokenization and sequence length.
+Falling back to synthetic data...
+Setting up models...
+Created reversible_standard model (584,093,696 params)
+Created non_reversible_standard model (584,093,696 params)
+
+==================================================
+ENHANCED TESTING: reversible_standard
+==================================================
+1. Calculating baseline language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 34682.15 (avg_loss: 10.4540)
+2. Measuring computational efficiency...
+3. Analyzing memory efficiency...
+4. Testing memory scaling...
+  Seq 128: 4484.5 MB (35.035 MB/token)
+  Seq 256: 4521.7 MB (17.663 MB/token)
+  Seq 512: 4574.9 MB (8.935 MB/token)
+5. Fine-tuning with enhanced metrics...
+Training config: LR=0.0001, Epochs=8
+Data loaders - Train: 125 batches, Val: 25 batches
+/home/yul23028/Reformer/reformer-pytorch/Rev-LLMs/test_train_qwen3_rev_v3f.py:561: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = GradScaler() if config['use_amp'] else None
+/home/yul23028/Reformer/reformer-pytorch/Rev-LLMs/test_train_qwen3_rev_v3f.py:602: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(dtype=config['amp_dtype']):
+Epoch 1, Batch 0: Loss: 10.4430, Acc: 0.0%, LR: 0.000100
+Epoch 1, Batch 30: Loss: 9.0959, Acc: 2.3%, LR: 0.000100
+Epoch 1, Batch 60: Loss: 9.0165, Acc: 2.6%, LR: 0.000100
+Epoch 1, Batch 90: Loss: 9.0141, Acc: 2.7%, LR: 0.000100
+Epoch 1, Batch 120: Loss: 9.0150, Acc: 2.7%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 9.0243, acc: 2.9%
+Epoch 1: Train Loss: 9.1787, Val Loss: 9.0243, Train Acc: 2.7%, Val Acc: 2.9%, Time: 98.43s, Memory: 13982.2MB, LR: 0.000099
+Epoch 2, Batch 0: Loss: 8.9730, Acc: 3.0%, LR: 0.000099
+Epoch 2, Batch 30: Loss: 8.9730, Acc: 2.8%, LR: 0.000099
+Epoch 2, Batch 60: Loss: 9.0074, Acc: 2.8%, LR: 0.000098
+Epoch 2, Batch 90: Loss: 9.4086, Acc: 3.1%, LR: 0.000097
+Epoch 2, Batch 120: Loss: 8.6893, Acc: 3.8%, LR: 0.000096
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 8.6151, acc: 8.3%
+Epoch 2: Train Loss: 8.9265, Val Loss: 8.6151, Train Acc: 4.0%, Val Acc: 8.3%, Time: 100.12s, Memory: 13982.2MB, LR: 0.000096
+Epoch 3, Batch 0: Loss: 8.5591, Acc: 8.1%, LR: 0.000096
+Epoch 3, Batch 30: Loss: 8.2074, Acc: 9.1%, LR: 0.000095
+Epoch 3, Batch 60: Loss: 7.7840, Acc: 10.7%, LR: 0.000094
+Epoch 3, Batch 90: Loss: 7.3595, Acc: 12.8%, LR: 0.000093
+Epoch 3, Batch 120: Loss: 6.7252, Acc: 14.9%, LR: 0.000092
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 6.5293, acc: 24.5%
+Epoch 3: Train Loss: 7.6828, Val Loss: 6.5293, Train Acc: 15.1%, Val Acc: 24.5%, Time: 100.62s, Memory: 13982.2MB, LR: 0.000092
+Epoch 4, Batch 0: Loss: 6.5253, Acc: 23.7%, LR: 0.000092
+Epoch 4, Batch 30: Loss: 6.0122, Acc: 26.4%, LR: 0.000090
+Epoch 4, Batch 60: Loss: 5.5621, Acc: 28.6%, LR: 0.000089
+Epoch 4, Batch 90: Loss: 4.8476, Acc: 31.3%, LR: 0.000088
+Epoch 4, Batch 120: Loss: 4.3460, Acc: 34.1%, LR: 0.000086
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 4.2591, acc: 45.7%
+Epoch 4: Train Loss: 5.4169, Val Loss: 4.2591, Train Acc: 34.5%, Val Acc: 45.7%, Time: 100.67s, Memory: 13982.2MB, LR: 0.000086
+Epoch 5, Batch 0: Loss: 4.1639, Acc: 46.1%, LR: 0.000086
+Epoch 5, Batch 30: Loss: 3.7080, Acc: 49.9%, LR: 0.000084
+Epoch 5, Batch 60: Loss: 3.2520, Acc: 53.0%, LR: 0.000082
+Epoch 5, Batch 90: Loss: 2.8360, Acc: 55.8%, LR: 0.000080
+Epoch 5, Batch 120: Loss: 2.5069, Acc: 58.4%, LR: 0.000079
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 2.5388, acc: 69.9%
+Epoch 5: Train Loss: 3.2500, Val Loss: 2.5388, Train Acc: 58.8%, Val Acc: 69.9%, Time: 100.69s, Memory: 13982.2MB, LR: 0.000078
+Epoch 6, Batch 0: Loss: 2.3034, Acc: 73.7%, LR: 0.000078
+Epoch 6, Batch 30: Loss: 2.1021, Acc: 74.8%, LR: 0.000076
+Epoch 6, Batch 60: Loss: 1.8537, Acc: 76.4%, LR: 0.000074
+Epoch 6, Batch 90: Loss: 1.6210, Acc: 78.2%, LR: 0.000072
+Epoch 6, Batch 120: Loss: 1.4551, Acc: 79.7%, LR: 0.000070
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.5352, acc: 85.3%
+Epoch 6: Train Loss: 1.8488, Val Loss: 1.5352, Train Acc: 79.9%, Val Acc: 85.3%, Time: 100.69s, Memory: 13982.2MB, LR: 0.000070
+Epoch 7, Batch 0: Loss: 1.2807, Acc: 90.0%, LR: 0.000070
+Epoch 7, Batch 30: Loss: 1.1248, Acc: 91.1%, LR: 0.000068
+Epoch 7, Batch 60: Loss: 0.9957, Acc: 91.6%, LR: 0.000066
+Epoch 7, Batch 90: Loss: 0.9318, Acc: 92.2%, LR: 0.000063
+Epoch 7, Batch 120: Loss: 0.7721, Acc: 92.8%, LR: 0.000061
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.9420, acc: 93.0%
+Epoch 7: Train Loss: 1.0118, Val Loss: 0.9420, Train Acc: 92.9%, Val Acc: 93.0%, Time: 100.68s, Memory: 13982.2MB, LR: 0.000061
+Epoch 8, Batch 0: Loss: 0.6633, Acc: 97.4%, LR: 0.000061
+Epoch 8, Batch 30: Loss: 0.5916, Acc: 97.6%, LR: 0.000058
+Epoch 8, Batch 60: Loss: 0.5778, Acc: 97.7%, LR: 0.000056
+Epoch 8, Batch 90: Loss: 0.4954, Acc: 97.8%, LR: 0.000054
+Epoch 8, Batch 120: Loss: 0.4483, Acc: 97.9%, LR: 0.000051
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.6163, acc: 96.8%
+Epoch 8: Train Loss: 0.5569, Val Loss: 0.6163, Train Acc: 98.0%, Val Acc: 96.8%, Time: 100.70s, Memory: 13982.2MB, LR: 0.000051
+6. Analyzing training stability...
+7. Final language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 1.86 (avg_loss: 0.6192)
+COMPLETED: reversible_standard
+  Perplexity: 34682.15 -> 1.86 (improvement: 34680.29)
+  Token Accuracy: 96.7%
+  Throughput: 15868 tokens/sec
+  Memory Efficiency: 2.04x
+  Memory Scaling: 0.23 MB/token
+
+  ==================================================
+ENHANCED TESTING: non_reversible_standard
+==================================================
+1. Calculating baseline language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 34100.88 (avg_loss: 10.4371)
+2. Measuring computational efficiency...
+3. Analyzing memory efficiency...
+4. Testing memory scaling...
+  Seq 128: 6717.7 MB (52.482 MB/token)
+  Seq 256: 6750.9 MB (26.371 MB/token)
+  Seq 512: 6800.4 MB (13.282 MB/token)
+5. Fine-tuning with enhanced metrics...
+Training config: LR=0.0001, Epochs=8
+Data loaders - Train: 125 batches, Val: 25 batches
+Epoch 1, Batch 0: Loss: 10.4449, Acc: 0.0%, LR: 0.000100
+Epoch 1, Batch 30: Loss: 9.1222, Acc: 2.7%, LR: 0.000100
+Epoch 1, Batch 60: Loss: 9.0559, Acc: 2.8%, LR: 0.000100
+Epoch 1, Batch 90: Loss: 9.0416, Acc: 2.8%, LR: 0.000100
+Epoch 1, Batch 120: Loss: 8.7188, Acc: 3.2%, LR: 0.000099
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 8.7338, acc: 7.1%
+Epoch 1: Train Loss: 9.1332, Val Loss: 8.7338, Train Acc: 3.3%, Val Acc: 7.1%, Time: 35.72s, Memory: 22034.0MB, LR: 0.000099
+Epoch 2, Batch 0: Loss: 8.7292, Acc: 6.3%, LR: 0.000099
+Epoch 2, Batch 30: Loss: 8.3436, Acc: 8.0%, LR: 0.000099
+Epoch 2, Batch 60: Loss: 7.7604, Acc: 9.7%, LR: 0.000098
+Epoch 2, Batch 90: Loss: 7.1619, Acc: 11.4%, LR: 0.000097
+Epoch 2, Batch 120: Loss: 6.6166, Acc: 13.3%, LR: 0.000096
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 6.5405, acc: 21.6%
+Epoch 2: Train Loss: 7.6654, Val Loss: 6.5405, Train Acc: 13.5%, Val Acc: 21.6%, Time: 35.72s, Memory: 22033.0MB, LR: 0.000096
+Epoch 3, Batch 0: Loss: 6.4847, Acc: 21.4%, LR: 0.000096
+Epoch 3, Batch 30: Loss: 5.9984, Acc: 22.2%, LR: 0.000095
+Epoch 3, Batch 60: Loss: 5.5579, Acc: 24.7%, LR: 0.000094
+Epoch 3, Batch 90: Loss: 5.2245, Acc: 27.1%, LR: 0.000093
+Epoch 3, Batch 120: Loss: 4.6467, Acc: 29.3%, LR: 0.000092
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 4.6347, acc: 39.0%
+Epoch 3: Train Loss: 5.5656, Val Loss: 4.6347, Train Acc: 29.6%, Val Acc: 39.0%, Time: 35.74s, Memory: 22033.0MB, LR: 0.000092
+Epoch 4, Batch 0: Loss: 4.5784, Acc: 39.0%, LR: 0.000092
+Epoch 4, Batch 30: Loss: 4.1634, Acc: 41.8%, LR: 0.000090
+Epoch 4, Batch 60: Loss: 3.8514, Acc: 44.3%, LR: 0.000089
+Epoch 4, Batch 90: Loss: 3.4068, Acc: 46.6%, LR: 0.000088
+Epoch 4, Batch 120: Loss: 3.0395, Acc: 48.9%, LR: 0.000086
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 3.0309, acc: 59.2%
+Epoch 4: Train Loss: 3.7428, Val Loss: 3.0309, Train Acc: 49.3%, Val Acc: 59.2%, Time: 35.75s, Memory: 22033.0MB, LR: 0.000086
+Epoch 5, Batch 0: Loss: 2.9718, Acc: 60.2%, LR: 0.000086
+Epoch 5, Batch 30: Loss: 2.5601, Acc: 62.3%, LR: 0.000084
+Epoch 5, Batch 60: Loss: 2.3790, Acc: 64.3%, LR: 0.000082
+Epoch 5, Batch 90: Loss: 2.1368, Acc: 66.0%, LR: 0.000080
+Epoch 5, Batch 120: Loss: 1.9834, Acc: 67.6%, LR: 0.000079
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.9765, acc: 74.6%
+Epoch 5: Train Loss: 2.3618, Val Loss: 1.9765, Train Acc: 67.8%, Val Acc: 74.6%, Time: 35.76s, Memory: 22033.0MB, LR: 0.000078
+Epoch 6, Batch 0: Loss: 1.7831, Acc: 78.4%, LR: 0.000078
+Epoch 6, Batch 30: Loss: 1.5604, Acc: 78.8%, LR: 0.000076
+Epoch 6, Batch 60: Loss: 1.4700, Acc: 80.0%, LR: 0.000074
+Epoch 6, Batch 90: Loss: 1.3108, Acc: 81.0%, LR: 0.000072
+Epoch 6, Batch 120: Loss: 1.1716, Acc: 82.0%, LR: 0.000070
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 1.2907, acc: 84.8%
+Epoch 6: Train Loss: 1.4443, Val Loss: 1.2907, Train Acc: 82.2%, Val Acc: 84.8%, Time: 35.74s, Memory: 22033.0MB, LR: 0.000070
+Epoch 7, Batch 0: Loss: 1.0474, Acc: 90.1%, LR: 0.000070
+Epoch 7, Batch 30: Loss: 0.9582, Acc: 90.3%, LR: 0.000068
+Epoch 7, Batch 60: Loss: 0.8333, Acc: 90.7%, LR: 0.000066
+Epoch 7, Batch 90: Loss: 0.7763, Acc: 91.2%, LR: 0.000063
+Epoch 7, Batch 120: Loss: 0.6921, Acc: 91.7%, LR: 0.000061
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.8553, acc: 91.4%
+Epoch 7: Train Loss: 0.8571, Val Loss: 0.8553, Train Acc: 91.7%, Val Acc: 91.4%, Time: 35.74s, Memory: 22033.0MB, LR: 0.000061
+Epoch 8, Batch 0: Loss: 0.5935, Acc: 96.3%, LR: 0.000061
+Epoch 8, Batch 30: Loss: 0.5193, Acc: 96.1%, LR: 0.000058
+Epoch 8, Batch 60: Loss: 0.4685, Acc: 96.2%, LR: 0.000056
+Epoch 8, Batch 90: Loss: 0.4632, Acc: 96.3%, LR: 0.000054
+Epoch 8, Batch 120: Loss: 0.4195, Acc: 96.5%, LR: 0.000051
+Starting validation with 25 batches...
+Validation: 25 batches, 102200 tokens, loss: 0.5821, acc: 95.1%
+Epoch 8: Train Loss: 0.5027, Val Loss: 0.5821, Train Acc: 96.5%, Val Acc: 95.1%, Time: 35.74s, Memory: 22033.0MB, LR: 0.000051
+6. Analyzing training stability...
+7. Final language modeling metrics...
+Calculating perplexity with up to 10 batches...
+Perplexity calculation: 10 valid batches, 40880 total tokens
+Final perplexity: 1.80 (avg_loss: 0.5867)
+COMPLETED: non_reversible_standard
+  Perplexity: 34100.88 -> 1.80 (improvement: 34099.08)
+  Token Accuracy: 94.9%
+  Throughput: 15319 tokens/sec
+  Memory Efficiency: 3.04x
+  Memory Scaling: 0.21 MB/token
+
+📊 Basic Performance Summary:
+
+====================================================================================================
+ENHANCED BENCHMARK SUMMARY
+====================================================================================================
+Model                PPL      Acc%   BPB      Tok/s    Mem      Eff    Conv     Stab     Scale   
+-----------------------------------------------------------------------------------------------
+reversible_standard  1.9      96.7   0.89     15868    13982    2.0    1.078    0.1      0.23    
+non_reversible_standard 1.8      94.9   0.85     15319    22034    3.0    1.079    0.1      0.21    
+====================================================================================================
+
+METRIC EXPLANATIONS:
+PPL = Perplexity (language modeling quality, lower better)
+Acc% = Token prediction accuracy (higher better)
+BPB = Bits per byte (compression efficiency, lower better)
+Tok/s = Inference throughput (higher better)
+Mem = Peak memory usage in MB (lower better)
+Eff = Memory efficiency ratio (lower better)
+Conv = Convergence rate (loss improvement/epoch, higher better)
+Stab = Training stability (higher better)
+Scale = Memory scaling slope MB/token (lower better)
+
+====================================================================================================
+KEY INSIGHTS:
+====================================================================================================
+
+BEST PERFORMERS:
+  Memory Efficiency: reversible_standard
+  Throughput: reversible_standard
+  Token Accuracy: reversible_standard
+Phase 1 visualization saved!
+
+📈 PHASE 4: Scaling & Efficiency Analysis
+------------------------------------------------------------
+
+Testing Small models...
+Created reversible_standard model (8,817,920 params)
+Created non_reversible_standard model (8,817,920 params)
+  Seq 128: 88.2 MB (0.689 MB/token)
+  Seq 256: 96.2 MB (0.376 MB/token)
+  Seq 512: 109.0 MB (0.213 MB/token)
+  reversible_standard: 225927 tok/s, 0.05 MB/tok
+  Seq 128: 88.2 MB (0.689 MB/token)
+  Seq 256: 96.2 MB (0.376 MB/token)
+  Seq 512: 108.7 MB (0.212 MB/token)
+  non_reversible_standard: 239824 tok/s, 0.05 MB/tok
+
+Testing Medium models...
+Created reversible_standard model (36,511,744 params)
+Created non_reversible_standard model (36,511,744 params)
+  Seq 128: 301.9 MB (2.359 MB/token)
+  Seq 256: 313.7 MB (1.225 MB/token)
+  Seq 512: 337.3 MB (0.659 MB/token)
+  reversible_standard: 119395 tok/s, 0.09 MB/tok
+  Seq 128: 300.5 MB (2.347 MB/token)
+  Seq 256: 310.7 MB (1.214 MB/token)
+  Seq 512: 333.3 MB (0.651 MB/token)
+  non_reversible_standard: 121935 tok/s, 0.09 MB/tok
+
+Testing Large models...
+Created reversible_standard model (97,237,760 params)
+Created non_reversible_standard model (97,237,760 params)
+  Seq 128: 769.5 MB (6.012 MB/token)
+  Seq 256: 789.1 MB (3.083 MB/token)
+  Seq 512: 819.3 MB (1.600 MB/token)
+  reversible_standard: 53735 tok/s, 0.13 MB/tok
+  Seq 128: 767.2 MB (5.994 MB/token)
+  Seq 256: 783.6 MB (3.061 MB/token)
+  Seq 512: 813.3 MB (1.588 MB/token)
+  non_reversible_standard: 54399 tok/s, 0.12 MB/tok
+
+📋 PHASE 5: Comprehensive Analysis Report
+================================================================================
+Enhanced results saved to comprehensive_evaluation_results.json
+
+🎉 EVALUATION COMPLETE!
+----------------------------------------
+✅ Phases completed: 5/5
+✅ Models tested: 2
+✅ Benchmarks: 
+✅ Results saved to: comprehensive_evaluation_results.json
+
+📊 Visualizations saved:
+  - phase1_basic_performance.png

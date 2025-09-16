@@ -1010,6 +1010,180 @@ def modern_train_with_mixed_precision(model, train_loader, val_loader, config):
     
     return model
 
+def create_reversible_qwen3_model(
+    vocab_size=32000,
+    hidden_size=4096,
+    num_hidden_layers=32,
+    num_attention_heads=32,
+    num_key_value_heads=8,
+    intermediate_size=11008,
+    max_position_embeddings=2048,
+    rope_theta=10000.0,
+    rms_norm_eps=1e-6,
+    # use_candidate_selection=True,
+    attention_type="candidate_selection",
+    candidate_pr_ratio=0.5,
+    candidate_top_k=40,
+    use_reversible=True,
+    reverse_thres=1024,
+    layer_dropout=0.0,
+    **kwargs
+):
+    """Factory function to create a reversible Qwen3 model with candidate selection"""
+    
+    config = Qwen3ReversibleCandidateConfig(
+        vocab_size=vocab_size,
+        hidden_size=hidden_size,
+        num_hidden_layers=num_hidden_layers,
+        num_attention_heads=num_attention_heads,
+        num_key_value_heads=num_key_value_heads,
+        intermediate_size=intermediate_size,
+        max_position_embeddings=max_position_embeddings,
+        rope_theta=rope_theta,
+        rms_norm_eps=rms_norm_eps,
+        # use_candidate_selection=use_candidate_selection,
+        attention_type=attention_type,
+        candidate_pr_ratio=candidate_pr_ratio,
+        candidate_top_k=candidate_top_k,
+        use_reversible=use_reversible,
+        reverse_thres=reverse_thres,
+        layer_dropout=layer_dropout,
+        **kwargs
+    )
+    
+    return ReversibleQwen3ForCausalLM(config)
+
+class ReversibleQwen3ForCausalLM(nn.Module):
+    """Qwen3 for causal language modeling with reversible layers and candidate selection"""
+    
+    def __init__(self, config: Qwen3ReversibleCandidateConfig):
+        super().__init__()
+        self.config = config
+        self.model = ReversibleQwen3Model(config)
+        self.vocab_size = config.vocab_size
+        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        
+        # Tie weights if specified
+        if getattr(config, 'tie_word_embeddings', False):
+            self.lm_head.weight = self.model.embed_tokens.weight
+    
+    def forward(
+        self,
+        input_ids: Optional[torch.LongTensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[Cache] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+        **kwargs
+    ):
+        # Forward through the model
+        hidden_states = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            use_cache=use_cache,
+            cache_position=cache_position,
+            **kwargs
+        )
+        
+        # Get logits
+        logits = self.lm_head(hidden_states)
+        
+        loss = None
+        if labels is not None:
+            # Compute loss
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(shift_logits.view(-1, self.vocab_size), shift_labels.view(-1))
+        
+        return {
+            'loss': loss,
+            'logits': logits,
+            'past_key_values': past_key_values,
+            'hidden_states': hidden_states,
+        }
+    
+    def generate_text(self, input_ids, max_length=100, temperature=1.0, do_sample=True):
+        """Simple text generation method"""
+        self.eval()
+        generated = input_ids.clone()
+        
+        with torch.no_grad():
+            for _ in range(max_length):
+                outputs = self.forward(generated)
+                logits = outputs['logits']
+                next_token_logits = logits[:, -1, :] / temperature
+                
+                if do_sample:
+                    probs = F.softmax(next_token_logits, dim=-1)
+                    next_token = torch.multinomial(probs, num_samples=1)
+                else:
+                    next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
+                
+                generated = torch.cat([generated, next_token], dim=1)
+                
+                # Check for EOS token if defined
+                if hasattr(self.config, 'eos_token_id') and next_token.item() == self.config.eos_token_id:
+                    break
+        
+        return generated
+
+
+class Qwen3ReversibleCandidateConfig(Qwen3Config):
+    """Extended Qwen3 config with candidate selection and reversible parameters"""
+    
+    def __init__(
+        self,
+        # use_candidate_selection=True,
+        attention_type="candidate_selection",  # "candidate_selection", "native_sparse", "standard"
+        candidate_pr_ratio=0.5,
+        candidate_top_k=40,
+        candidate_layers=None,
+        candidate_use_checkpointing=False,  # Added missing attribute
+        use_reversible=True,
+        reverse_thres=1024,
+        layer_dropout=0.0,
+        sliding_window_size=64,
+        compress_block_size=16,
+        compress_block_sliding_stride=8,
+        selection_block_size=16,
+        num_selected_blocks=4,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        # self.use_candidate_selection = use_candidate_selection
+        self.candidate_pr_ratio = candidate_pr_ratio
+        self.candidate_top_k = candidate_top_k
+        self.candidate_layers = candidate_layers or list(range(self.num_hidden_layers))
+        self.candidate_use_checkpointing = candidate_use_checkpointing  # Added missing attribute
+        self.use_reversible = use_reversible
+        self.reverse_thres = reverse_thres
+        self.layer_dropout = layer_dropout
+        self.attention_type = attention_type
+        
+        self.sliding_window_size = sliding_window_size
+        self.compress_block_size = compress_block_size
+        self.compress_block_sliding_stride = compress_block_sliding_stride
+        self.selection_block_size = selection_block_size
+        self.num_selected_blocks = num_selected_blocks
+
+        # Ensure head dimension is set
+        if not hasattr(self, 'head_dim'):
+            self.head_dim = self.hidden_size // self.num_attention_heads
+        
+        # Set default rotary embedding parameters if not present
+        if not hasattr(self, 'rope_theta'):
+            self.rope_theta = 10000.0
+        if not hasattr(self, 'max_position_embeddings'):
+            self.max_position_embeddings = 2048
+
+
 # Test function for the modern implementation
 def test_modern_reversible_qwen3():
     """Test the modern reversible Qwen3 implementation"""

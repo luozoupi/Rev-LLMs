@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total_models_evaluated": 2,
+    "successful_evaluations": 0,
+    "failed_evaluations": 2
+  },
+  "detailed": {
+    "reversible_qwen3_small_seed42": {
+      "error": "Model creation not available - missing imports"
+    },
+    "standard_qwen3_small_seed42": {
+      "error": "Model creation not available - missing imports"
+    }
+  },
+  "comparisons": {
+    "performance_gaps": {},
+    "efficiency_gaps": {},
+    "memory_gaps": {}
+  }
+}

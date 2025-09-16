@@ -1,0 +1,77 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {
+        "train_losses": [
+          0
+        ],
+        "val_metrics": [
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 1
+      },
+      "standard_qwen3": {
+        "train_losses": [
+          0
+        ],
+        "val_metrics": [
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 1
+      },
+      "dizo_opt": {
+        "train_losses": [
+          0
+        ],
+        "val_metrics": [
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 1
+      }
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "overall_score": 0.5,
+      "tasks_completed": 1,
+      "total_tasks": 1
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.5114678899082569,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "overall_score": 0.5114678899082569,
+      "tasks_completed": 1,
+      "total_tasks": 1
+    },
+    "dizo_opt": {
+      "sst2": {
+        "score": 0.4988532110091743,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "overall_score": 0.4988532110091743,
+      "tasks_completed": 1,
+      "total_tasks": 1
+    }
+  },
+  "memory": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "advanced": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "comprehensive": {
+    "skipped": "No suitable method available"
+  }
+}

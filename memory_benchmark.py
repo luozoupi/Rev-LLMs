@@ -35,11 +35,14 @@ MEMORY_TASKS = {
 class LongRangeMemoryDataset(Dataset):
     """Dataset for long-range memory tasks"""
     
-    def __init__(self, task_name: str, num_samples: int = 1000, vocab_size: int = 1000):
+    def __init__(self, task_name: str, num_samples: int = 1000, vocab_size: int = 32000):
         self.task_name = task_name
         self.task_config = MEMORY_TASKS[task_name]
         self.vocab_size = vocab_size
         self.examples = []
+        
+        # Ensure tokens stay within vocab range
+        self.max_data_token = min(vocab_size - 100, 1000)  # Leave room for special tokens
         
         # Generate task-specific examples
         for _ in range(num_samples):
@@ -66,15 +69,15 @@ class LongRangeMemoryDataset(Dataset):
         seq_len = self.task_config.sequence_length
         memory_span = self.task_config.memory_span
         
-        # Generate random sequence to memorize
+        # Generate random sequence to memorize (use proper vocab range)
         sequence_length = np.random.randint(20, 50)
-        sequence = np.random.randint(10, self.vocab_size // 2, sequence_length)
+        sequence = np.random.randint(10, self.max_data_token // 2, sequence_length)
         
-        # Create delay tokens
+        # Create delay tokens (different range for diversity)
         delay_length = memory_span - sequence_length - 10
-        delay_tokens = np.random.randint(self.vocab_size // 2, self.vocab_size - 10, delay_length)
+        delay_tokens = np.random.randint(self.max_data_token // 2, self.max_data_token - 10, delay_length)
         
-        # Special tokens
+        # Special tokens (within vocab range)
         copy_token = 1
         end_token = 2
         
@@ -107,10 +110,10 @@ class LongRangeMemoryDataset(Dataset):
         """Generate associative recall: learn A->B pairs, then test recall"""
         seq_len = self.task_config.sequence_length
         
-        # Generate key-value pairs
+        # Generate key-value pairs (use proper vocab range)
         num_pairs = 10
         keys = np.random.randint(10, 100, num_pairs)
-        values = np.random.randint(100, 200, num_pairs)
+        values = np.random.randint(100, min(200, self.max_data_token), num_pairs)
         
         # Special tokens
         pair_sep = 3
@@ -418,7 +421,7 @@ class MemoryBenchmark:
     def __init__(self):
         self.results = {}
     
-    def create_memory_datasets(self, task_names: List[str], num_samples: int = 500):
+    def create_memory_datasets(self, task_names: List[str], num_samples: int = 500, vocab_size: int = 32000):
         """Create datasets for memory tasks"""
         datasets = {}
         
@@ -430,8 +433,8 @@ class MemoryBenchmark:
             print(f"Generating {task_name} dataset...")
             
             try:
-                train_dataset = LongRangeMemoryDataset(task_name, num_samples)
-                val_dataset = LongRangeMemoryDataset(task_name, num_samples // 4)
+                train_dataset = LongRangeMemoryDataset(task_name, num_samples, vocab_size)
+                val_dataset = LongRangeMemoryDataset(task_name, num_samples // 4, vocab_size)
                 
                 datasets[task_name] = {
                     'train': train_dataset,
@@ -440,9 +443,12 @@ class MemoryBenchmark:
                 }
                 
                 print(f"  Created {len(train_dataset)} train, {len(val_dataset)} val examples")
+                print(f"  Using vocab_size: {vocab_size}, max_data_token: {train_dataset.max_data_token}")
                 
             except Exception as e:
                 print(f"Failed to create {task_name}: {e}")
+                import traceback
+                print(f"Traceback: {traceback.format_exc()[:200]}...")
                 continue
         
         return datasets
@@ -461,12 +467,20 @@ class MemoryBenchmark:
         
         criterion = nn.CrossEntropyLoss(ignore_index=0, reduction='sum')
         
+        print(f"    Evaluating {len(dataset)} examples...")
+        
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(dataloader):
-                if batch_idx >= 100:  # Limit for memory efficiency
+                if batch_idx >= 50:  # Limit for efficiency
                     break
                 
                 inputs, targets = inputs.to(device), targets.to(device)
+                
+                # Debug: Check input/target shapes and ranges
+                if batch_idx == 0:
+                    print(f"    Input shape: {inputs.shape}, Target shape: {targets.shape}")
+                    print(f"    Input range: [{inputs.min().item()}, {inputs.max().item()}]")
+                    print(f"    Target range: [{targets.min().item()}, {targets.max().item()}]")
                 
                 # Measure memory before forward pass
                 if torch.cuda.is_available():
@@ -476,18 +490,27 @@ class MemoryBenchmark:
                     outputs = model(inputs)
                     logits = outputs['logits'] if isinstance(outputs, dict) else outputs
                     
-                    # Calculate loss and accuracy
+                    # Debug: Check output shapes
+                    if batch_idx == 0:
+                        print(f"    Logits shape: {logits.shape}")
+                        print(f"    Vocab size from logits: {logits.size(-1)}")
+                    
+                    # Calculate loss and accuracy with better error checking
                     shift_logits = logits[..., :-1, :].contiguous()
                     shift_labels = targets[..., 1:].contiguous()
+                    
+                    # Ensure valid target values
+                    valid_mask = (shift_labels >= 0) & (shift_labels < logits.size(-1))
+                    shift_labels = shift_labels * valid_mask.long()  # Zero out invalid targets
                     
                     loss = criterion(
                         shift_logits.view(-1, shift_logits.size(-1)),
                         shift_labels.view(-1)
                     )
                     
-                    # Accuracy calculation
+                    # Calculate accuracies
                     predictions = torch.argmax(shift_logits, dim=-1)
-                    mask = (shift_labels != 0)  # Non-padding tokens
+                    mask = (shift_labels != 0) & valid_mask  # Non-padding and valid tokens
                     correct = (predictions == shift_labels) & mask
                     
                     batch_tokens = mask.sum().item()
@@ -508,15 +531,31 @@ class MemoryBenchmark:
                         memory_usage.append(peak_memory)
                     
                 except Exception as e:
-                    print(f"Error evaluating batch {batch_idx}: {e}")
+                    print(f"    Error evaluating batch {batch_idx}: {e}")
+                    print(f"    Input shape: {inputs.shape if inputs is not None else 'None'}")
+                    print(f"    Target shape: {targets.shape if targets is not None else 'None'}")
+                    import traceback
+                    print(f"    Traceback: {traceback.format_exc()[:300]}...")
                     continue
         
-        # Calculate final metrics
-        avg_loss = total_loss / total_tokens if total_tokens > 0 else float('inf')
-        token_accuracy = correct_predictions / total_tokens if total_tokens > 0 else 0.0
+        # Calculate final metrics with safety checks
+        if total_tokens == 0:
+            print(f"    Warning: No valid tokens processed for {task_name}")
+            return {'error': 'No valid tokens processed'}
+        
+        avg_loss = total_loss / total_tokens
+        token_accuracy = correct_predictions / total_tokens
         sequence_accuracy = np.mean(sequence_accuracies) if sequence_accuracies else 0.0
         avg_memory = np.mean(memory_usage) if memory_usage else 0.0
-        perplexity = np.exp(avg_loss) if avg_loss < 20 else float('inf')
+        
+        # Handle perplexity calculation more safely
+        if avg_loss > 20:
+            perplexity = float('inf')
+            print(f"    Warning: Very high loss ({avg_loss:.2f}) for {task_name}")
+        else:
+            perplexity = np.exp(avg_loss)
+        
+        print(f"    Processed {total_tokens} tokens, {len(sequence_accuracies)} sequences")
         
         return {
             'perplexity': perplexity,
@@ -526,7 +565,8 @@ class MemoryBenchmark:
             'sequence_length': MEMORY_TASKS[task_name].sequence_length,
             'memory_span': MEMORY_TASKS[task_name].memory_span,
             'difficulty': MEMORY_TASKS[task_name].difficulty,
-            'samples_evaluated': len(sequence_accuracies)
+            'samples_evaluated': len(sequence_accuracies),
+            'avg_loss': avg_loss
         }
     
     def run_memory_benchmark(self, models: Dict[str, nn.Module], device='cuda'):
@@ -551,7 +591,7 @@ class MemoryBenchmark:
                 
                 # Create datasets for this phase
                 try:
-                    datasets = self.create_memory_datasets(task_phase, num_samples=200)
+                    datasets = self.create_memory_datasets(task_phase, num_samples=200, vocab_size=32000)
                 except Exception as e:
                     print(f"    Failed to create datasets: {e}")
                     continue

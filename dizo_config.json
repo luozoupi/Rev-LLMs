@@ -1,0 +1,83 @@
+{
+  "scale_configs": {
+    "small": {
+      "model": "facebook/opt-350m",
+      "learning_rate": 1e-06,
+      "eps": 0.001,
+      "steps": 2000,
+      "eval_steps": 500,
+      "batch_size": 16,
+      "num_train": 500,
+      "num_dev": 200,
+      "num_eval": 500,
+      "enhanced": "zo"
+    },
+    "medium": {
+      "model": "facebook/opt-1.3b",
+      "learning_rate": 1e-06,
+      "eps": 0.001,
+      "steps": 4000,
+      "eval_steps": 500,
+      "batch_size": 16,
+      "num_train": 1000,
+      "num_dev": 500,
+      "num_eval": 1000,
+      "enhanced": "zo"
+    },
+    "large": {
+      "model": "facebook/opt-2.7b",
+      "learning_rate": 1e-06,
+      "eps": 0.001,
+      "steps": 8000,
+      "eval_steps": 500,
+      "batch_size": 16,
+      "num_train": 2000,
+      "num_dev": 1000,
+      "num_eval": 2000,
+      "enhanced": "zo"
+    }
+  },
+  "task_configs": {
+    "SST2": {
+      "train_as_classification": true
+    },
+    "COLA": {
+      "train_as_classification": true
+    },
+    "MRPC": {
+      "train_as_classification": true
+    },
+    "QQP": {
+      "train_as_classification": true
+    },
+    "MNLI": {
+      "train_as_classification": true
+    },
+    "QNLI": {
+      "train_as_classification": true
+    },
+    "RTE": {
+      "train_as_classification": true
+    },
+    "WNLI": {
+      "train_as_classification": true
+    },
+    "Copa": {
+      "train_as_classification": false,
+      "num_dev": 100
+    },
+    "ReCoRD": {
+      "train_as_classification": false
+    },
+    "DROP": {
+      "train_as_classification": false
+    },
+    "SQuAD": {
+      "train_as_classification": false
+    },
+    "CB": {
+      "num_dev": 100
+    }
+  },
+  "dizo_path": "/home/yul23028/DiZO/large_models"
+}

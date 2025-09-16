@@ -25,16 +25,51 @@ def test_model_creation():
     logger.info("Testing model creation...")
     
     try:
-        from run_evaluation import ModelFactory
-        
-        # Test small model creation
-        model = ModelFactory.create_model("reversible_qwen3", "small", "cpu")
-        logger.info(f"✓ Reversible model created: {sum(p.numel() for p in model.parameters())} parameters")
-        
-        model = ModelFactory.create_model("standard_qwen3", "small", "cpu")
-        logger.info(f"✓ Standard model created: {sum(p.numel() for p in model.parameters())} parameters")
-        
-        return True
+        # Try to import the actual model creation functions
+        try:
+            from qwen3_reversible_02_3 import create_modern_reversible_qwen3_model
+            logger.info("✓ Found modern reversible model creation function")
+            
+            # Test small model creation
+            model = create_modern_reversible_qwen3_model(
+                vocab_size=1000,
+                hidden_size=256,
+                num_hidden_layers=4,
+                num_attention_heads=8,
+                num_key_value_heads=4,
+                attention_type="standard",
+                use_reversible=True,
+                device="cpu"
+            )
+            logger.info(f"✓ Reversible model created: {sum(p.numel() for p in model.parameters())} parameters")
+            
+            # Test standard model (reversible=False)
+            model = create_modern_reversible_qwen3_model(
+                vocab_size=1000,
+                hidden_size=256,
+                num_hidden_layers=4,
+                num_attention_heads=8,
+                num_key_value_heads=4,
+                attention_type="standard",
+                use_reversible=False,
+                device="cpu"
+            )
+            logger.info(f"✓ Standard model created: {sum(p.numel() for p in model.parameters())} parameters")
+            
+            return True
+            
+        except ImportError:
+            # Fallback to run_evaluation ModelFactory
+            from run_evaluation import ModelFactory
+            
+            # Test small model creation
+            model = ModelFactory.create_model("reversible_qwen3", "small", "cpu")
+            logger.info(f"✓ Reversible model created: {sum(p.numel() for p in model.parameters())} parameters")
+            
+            model = ModelFactory.create_model("standard_qwen3", "small", "cpu")
+            logger.info(f"✓ Standard model created: {sum(p.numel() for p in model.parameters())} parameters")
+            
+            return True
         
     except Exception as e:
         logger.error(f"✗ Model creation failed: {e}")
@@ -46,11 +81,26 @@ def test_zero_order_optimization():
     
     try:
         from zero_order_optimization import ZeroOrderConfig, ZeroOrderOptimizer
-        from run_evaluation import ModelFactory
         import torch
         
-        # Create small model
-        model = ModelFactory.create_model("reversible_qwen3", "small", "cpu")
+        # Try to create model
+        try:
+            from qwen3_reversible_02_3 import create_modern_reversible_qwen3_model
+            # Create small model
+            model = create_modern_reversible_qwen3_model(
+                vocab_size=1000,
+                hidden_size=128,
+                num_hidden_layers=2,
+                num_attention_heads=4,
+                num_key_value_heads=2,
+                attention_type="standard",
+                use_reversible=True,
+                device="cpu"
+            )
+        except ImportError:
+            from run_evaluation import ModelFactory
+            # Create small model
+            model = ModelFactory.create_model("reversible_qwen3", "small", "cpu")
         
         # Create ZO optimizer
         zo_config = ZeroOrderConfig(zo_eps=1e-3, enhanced=True)
@@ -65,9 +115,10 @@ def test_zero_order_optimization():
         
         def simple_loss_fn(outputs, batch):
             if hasattr(outputs, 'logits'):
-                return torch.nn.functional.cross_entropy(outputs.logits.mean(dim=1), batch['labels'])
+                logits = outputs.logits if hasattr(outputs, 'logits') else outputs['logits']
+                return torch.nn.functional.cross_entropy(logits.mean(dim=1), batch['labels'])
             else:
-                return torch.mean(outputs)
+                return torch.mean(outputs if isinstance(outputs, torch.Tensor) else outputs['logits'])
         
         step_result = optimizer.step(batch, simple_loss_fn)
         logger.info(f"✓ ZO optimization step completed: loss={step_result['loss']:.4f}")

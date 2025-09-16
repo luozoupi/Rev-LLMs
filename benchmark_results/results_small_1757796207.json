@@ -1,0 +1,90 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {},
+      "dizo_opt": {}
+    },
+    "cola": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {},
+      "dizo_opt": {}
+    },
+    "mrpc": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {},
+      "dizo_opt": {}
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5011467889908257,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "cola": {
+        "score": 0.6807286673058485,
+        "inference_time": 0.1,
+        "predictions": 1043
+      },
+      "mrpc": {
+        "score": 0.5318627450980392,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.571246067131571,
+      "tasks_completed": 3,
+      "total_tasks": 3
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.47706422018348627,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "cola": {
+        "score": 0.6558005752636625,
+        "inference_time": 0.1,
+        "predictions": 1043
+      },
+      "mrpc": {
+        "score": 0.5098039215686274,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.5475562390052587,
+      "tasks_completed": 3,
+      "total_tasks": 3
+    },
+    "dizo_opt": {
+      "sst2": {
+        "score": 0.5091743119266054,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "cola": {
+        "score": 0.6912751677852349,
+        "inference_time": 0.1,
+        "predictions": 1043
+      },
+      "mrpc": {
+        "score": 0.6176470588235294,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.6060321795117899,
+      "tasks_completed": 3,
+      "total_tasks": 3
+    }
+  },
+  "memory": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "advanced": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "comprehensive": {
+    "skipped": "No suitable method available"
+  }
+}

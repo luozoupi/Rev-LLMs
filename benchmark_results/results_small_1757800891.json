@@ -1,0 +1,136 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          1.0,
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 2
+      },
+      "standard_qwen3": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          1.0,
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 2
+      },
+      "dizo_opt": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          1.0,
+          1.0
+        ],
+        "best_metric": 1.0,
+        "epochs_trained": 2
+      }
+    },
+    "mrpc": {
+      "reversible_qwen3": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          0,
+          0
+        ],
+        "best_metric": 0,
+        "epochs_trained": 2
+      },
+      "standard_qwen3": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          0,
+          0
+        ],
+        "best_metric": 0,
+        "epochs_trained": 2
+      },
+      "dizo_opt": {
+        "train_losses": [
+          0,
+          0
+        ],
+        "val_metrics": [
+          0,
+          0
+        ],
+        "best_metric": 0,
+        "epochs_trained": 2
+      }
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5114678899082569,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.5637254901960784,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.5375966900521676,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.4908256880733945,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.39705882352941174,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.4439422558014031,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    },
+    "dizo_opt": {
+      "sst2": {
+        "score": 0.4988532110091743,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.5416666666666666,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.5202599388379204,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    }
+  },
+  "memory": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "advanced": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "comprehensive": {
+    "skipped": "No suitable method available"
+  }
+}

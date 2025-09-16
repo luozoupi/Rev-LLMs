@@ -44,11 +44,15 @@ class StatisticalAnalyzer:
         if not reversible_scores or not standard_scores:
             return {"error": "Empty score lists"}
         
+        # Convert to numpy arrays to avoid ambiguous truth value issues
+        reversible_scores = np.asarray(reversible_scores)
+        standard_scores = np.asarray(standard_scores)
+        
         # Basic statistics
         rev_mean = np.mean(reversible_scores)
-        rev_std = np.std(reversible_scores)
+        rev_std = np.std(reversible_scores, ddof=1)  # Use sample standard deviation
         std_mean = np.mean(standard_scores)
-        std_std = np.std(standard_scores)
+        std_std = np.std(standard_scores, ddof=1)  # Use sample standard deviation
         
         # Effect size (Cohen's d)
         pooled_std = np.sqrt(((len(reversible_scores) - 1) * rev_std**2 + 
@@ -68,10 +72,13 @@ class StatisticalAnalyzer:
         ks_stat, ks_pvalue = stats.ks_2samp(reversible_scores, standard_scores)
         
         # Confidence intervals
+        rev_se = rev_std / np.sqrt(len(reversible_scores))
+        std_se = std_std / np.sqrt(len(standard_scores))
+        
         rev_ci = stats.t.interval(self.confidence_level, len(reversible_scores)-1, 
-                                 loc=rev_mean, scale=rev_std/np.sqrt(len(reversible_scores)))
+                                 loc=rev_mean, scale=rev_se)
         std_ci = stats.t.interval(self.confidence_level, len(standard_scores)-1,
-                                 loc=std_mean, scale=std_std/np.sqrt(len(standard_scores)))
+                                 loc=std_mean, scale=std_se)
         
         # Interpretation
         significant = t_pvalue < self.alpha

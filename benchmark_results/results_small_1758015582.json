@@ -1,0 +1,632 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {
+        "train_losses": [
+          0.5154379030658627,
+          0.32283848748495914
+        ],
+        "val_metrics": [
+          0.7901376146788991,
+          0.8038990825688074
+        ],
+        "best_metric": 0.8038990825688074,
+        "epochs_trained": 2
+      },
+      "standard_qwen3": {
+        "train_losses": [
+          0.506918060330059,
+          0.31682459314546224
+        ],
+        "val_metrics": [
+          0.7798165137614679,
+          0.786697247706422
+        ],
+        "best_metric": 0.786697247706422,
+        "epochs_trained": 2
+      }
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5126146788990825,
+        "inference_time": 9.815507525697761,
+        "num_samples": 872,
+        "difficulty": "easy"
+      },
+      "_summary": {
+        "overall_score": 0.5126146788990825,
+        "weighted_score": 0.5126146788990825,
+        "tasks_completed": 1,
+        "total_tasks": 1
+      }
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.3830275229357798,
+        "inference_time": 9.786665166189911,
+        "num_samples": 872,
+        "difficulty": "easy"
+      },
+      "_summary": {
+        "overall_score": 0.3830275229357798,
+        "weighted_score": 0.3830275229357798,
+        "tasks_completed": 1,
+        "total_tasks": 1
+      }
+    }
+  },
+  "memory": {
+    "reversible_qwen3": {
+      "phase_1": {
+        "copy_task": {
+          "perplexity": 35109.874033339554,
+          "token_accuracy": 3.721899657585231e-05,
+          "sequence_accuracy": 3.780718336483932e-05,
+          "avg_memory_mb": 2377.646396484375,
+          "sequence_length": 1024,
+          "memory_span": 512,
+          "difficulty": "medium",
+          "samples_evaluated": 50,
+          "avg_loss": 10.466237681384454
+        },
+        "associative_recall": {
+          "perplexity": 48316.82031774511,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2683.219580078125,
+          "sequence_length": 2048,
+          "memory_span": 1000,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.785535025761046
+        }
+      },
+      "phase_1_summary": {
+        "avg_perplexity": 41713.34717554233,
+        "avg_token_accuracy": 1.8609498287926157e-05,
+        "avg_sequence_accuracy": 1.890359168241966e-05,
+        "avg_memory_mb": 2530.43298828125,
+        "tasks_completed": 2
+      },
+      "phase_2": {
+        "needle_in_haystack": {
+          "perplexity": 35461.874065447024,
+          "token_accuracy": 4.001000250062516e-05,
+          "sequence_accuracy": 4.001000250062515e-05,
+          "avg_memory_mb": 3761.616591796875,
+          "sequence_length": 4096,
+          "memory_span": 2000,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.47621342835709
+        },
+        "long_arithmetic": {
+          "perplexity": 35725.35273490867,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2377.646396484375,
+          "sequence_length": 1024,
+          "memory_span": 800,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.483615876364683
+        }
+      },
+      "phase_2_summary": {
+        "avg_perplexity": 35593.61340017785,
+        "avg_token_accuracy": 2.000500125031258e-05,
+        "avg_sequence_accuracy": 2.0005001250312576e-05,
+        "avg_memory_mb": 3069.6314941406254,
+        "tasks_completed": 2
+      },
+      "phase_3": {
+        "variable_binding": {
+          "perplexity": 35311.885368307085,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2512.977216796875,
+          "sequence_length": 1536,
+          "memory_span": 1000,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.471974882238051
+        },
+        "narrative_coherence": {
+          "perplexity": 35060.37993942523,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 3156.850322265625,
+          "sequence_length": 3072,
+          "memory_span": 1500,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.464826995251226
+        }
+      },
+      "phase_3_summary": {
+        "avg_perplexity": 35186.13265386615,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 2834.91376953125,
+        "tasks_completed": 2
+      },
+      "phase_4": {
+        "hierarchical_structure": {
+          "perplexity": 33973.92404597716,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2683.219580078125,
+          "sequence_length": 2048,
+          "memory_span": 1200,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.433348569525293
+        }
+      },
+      "phase_4_summary": {
+        "avg_perplexity": 33973.92404597716,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 2683.219580078125,
+        "tasks_completed": 1
+      }
+    },
+    "standard_qwen3": {
+      "phase_1": {
+        "copy_task": {
+          "perplexity": 35370.16524945365,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2367.855966796875,
+          "sequence_length": 1024,
+          "memory_span": 512,
+          "difficulty": "medium",
+          "samples_evaluated": 50,
+          "avg_loss": 10.473623954211616
+        },
+        "associative_recall": {
+          "perplexity": 34738.06234355461,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2667.547236328125,
+          "sequence_length": 2048,
+          "memory_span": 1000,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.455591262291218
+        }
+      },
+      "phase_1_summary": {
+        "avg_perplexity": 35054.11379650413,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 2517.7016015625,
+        "tasks_completed": 2
+      },
+      "phase_2": {
+        "needle_in_haystack": {
+          "perplexity": 35408.14269279178,
+          "token_accuracy": 3.0007501875468866e-05,
+          "sequence_accuracy": 3.000750187546887e-05,
+          "avg_memory_mb": 3730.124404296875,
+          "sequence_length": 4096,
+          "memory_span": 2000,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.47469709224181
+        },
+        "long_arithmetic": {
+          "perplexity": 35217.31412004186,
+          "token_accuracy": 5.874865367668658e-05,
+          "sequence_accuracy": 5.8746748803502185e-05,
+          "avg_memory_mb": 2367.855966796875,
+          "sequence_length": 1024,
+          "memory_span": 800,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.469293119063938
+        }
+      },
+      "phase_2_summary": {
+        "avg_perplexity": 35312.72840641682,
+        "avg_token_accuracy": 4.437807777607772e-05,
+        "avg_sequence_accuracy": 4.437712533948553e-05,
+        "avg_memory_mb": 3048.990185546875,
+        "tasks_completed": 2
+      },
+      "phase_3": {
+        "variable_binding": {
+          "perplexity": 36090.1637453495,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2498.286787109375,
+          "sequence_length": 1536,
+          "memory_span": 1000,
+          "difficulty": "hard",
+          "samples_evaluated": 50,
+          "avg_loss": 10.493775634765624
+        },
+        "narrative_coherence": {
+          "perplexity": 34728.99792230899,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 3133.337978515625,
+          "sequence_length": 3072,
+          "memory_span": 1500,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.455330291947508
+        }
+      },
+      "phase_3_summary": {
+        "avg_perplexity": 35409.58083382924,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 2815.8123828125,
+        "tasks_completed": 2
+      },
+      "phase_4": {
+        "hierarchical_structure": {
+          "perplexity": 39253.98340047963,
+          "token_accuracy": 0.0,
+          "sequence_accuracy": 0.0,
+          "avg_memory_mb": 2667.547236328125,
+          "sequence_length": 2048,
+          "memory_span": 1200,
+          "difficulty": "extreme",
+          "samples_evaluated": 50,
+          "avg_loss": 10.577808205971314
+        }
+      },
+      "phase_4_summary": {
+        "avg_perplexity": 39253.98340047963,
+        "avg_token_accuracy": 0.0,
+        "avg_sequence_accuracy": 0.0,
+        "avg_memory_mb": 2667.547236328125,
+        "tasks_completed": 1
+      }
+    }
+  },
+  "advanced": {
+    "reversible_qwen3": {
+      "long_range": {
+        "long_range_accuracy": 0.0,
+        "loss": 10.563788890838623,
+        "correct_predictions": 0,
+        "total_predictions": 51200
+      },
+      "associative_recall": {
+        "recall_accuracy": 0.0,
+        "correct_recalls": 0,
+        "total_recalls": 297
+      },
+      "memory_stress": [
+        {
+          "seq_length": 512,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 512,
+              "peak_memory_mb": 2180.2587890625,
+              "time_seconds": 0.008406639099121094,
+              "tokens_per_second": 60904.244129325016
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 512,
+              "peak_memory_mb": 2318.2626953125,
+              "time_seconds": 0.006556510925292969,
+              "tokens_per_second": 156180.62894545455
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 512,
+              "peak_memory_mb": 2524.2705078125,
+              "time_seconds": 0.006625652313232422,
+              "tokens_per_second": 309101.64059014036
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 512,
+              "peak_memory_mb": 2935.7861328125,
+              "time_seconds": 0.007409811019897461,
+              "tokens_per_second": 552780.6294925835
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 512,
+              "peak_memory_mb": 3760.3173828125,
+              "time_seconds": 0.01124429702758789,
+              "tokens_per_second": 728547.1008014927
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 512,
+              "peak_memory_mb": 5411.8798828125,
+              "time_seconds": 0.010599374771118164,
+              "tokens_per_second": 1545751.5517466315
+            }
+          ]
+        },
+        {
+          "seq_length": 1024,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 1024,
+              "peak_memory_mb": 4287.2666015625,
+              "time_seconds": 0.006491661071777344,
+              "tokens_per_second": 157740.82914646686
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 1024,
+              "peak_memory_mb": 2524.7744140625,
+              "time_seconds": 0.00619959831237793,
+              "tokens_per_second": 330343.9830788755
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 1024,
+              "peak_memory_mb": 2936.2900390625,
+              "time_seconds": 0.0075244903564453125,
+              "tokens_per_second": 544355.8043092522
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 1024,
+              "peak_memory_mb": 3760.8212890625,
+              "time_seconds": 0.009047269821166992,
+              "tokens_per_second": 905466.5287901547
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 1024,
+              "peak_memory_mb": 5412.3837890625,
+              "time_seconds": 0.012729644775390625,
+              "tokens_per_second": 1287074.4069523525
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 1024,
+              "peak_memory_mb": 8716.5087890625,
+              "time_seconds": 0.01274728775024414,
+              "tokens_per_second": 2570586.0448135263
+            }
+          ]
+        },
+        {
+          "seq_length": 2048,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 2048,
+              "peak_memory_mb": 6496.7822265625,
+              "time_seconds": 0.006849765777587891,
+              "tokens_per_second": 298988.3255134006
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 2048,
+              "peak_memory_mb": 3004.7978515625,
+              "time_seconds": 0.0180509090423584,
+              "tokens_per_second": 226913.77982063373
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 2048,
+              "peak_memory_mb": 3897.8291015625,
+              "time_seconds": 0.010309457778930664,
+              "tokens_per_second": 794610.1701625772
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 2048,
+              "peak_memory_mb": 5685.3916015625,
+              "time_seconds": 0.010608434677124023,
+              "tokens_per_second": 1544431.4358017754
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 2048,
+              "peak_memory_mb": 9261.5166015625,
+              "time_seconds": 0.010627269744873047,
+              "tokens_per_second": 3083388.3760039485
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 2048,
+              "peak_memory_mb": 16413.7666015625,
+              "time_seconds": 0.011745691299438477,
+              "tokens_per_second": 5579577.934517406
+            }
+          ]
+        }
+      ],
+      "few_shot": {
+        "few_shot_accuracy": 0.3,
+        "correct": 6,
+        "total": 20
+      },
+      "generation": {
+        "avg_repetition_rate": 0.001666666666666668,
+        "avg_diversity_score": 1.0,
+        "avg_coherence_score": 1.2666285720314692e-05
+      }
+    },
+    "standard_qwen3": {
+      "long_range": {
+        "long_range_accuracy": 0.0,
+        "loss": 10.425710544586181,
+        "correct_predictions": 0,
+        "total_predictions": 51200
+      },
+      "associative_recall": {
+        "recall_accuracy": 0.0,
+        "correct_recalls": 0,
+        "total_recalls": 299
+      },
+      "memory_stress": [
+        {
+          "seq_length": 512,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 512,
+              "peak_memory_mb": 2174.2587890625,
+              "time_seconds": 0.007024049758911133,
+              "tokens_per_second": 72892.4221173755
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 512,
+              "peak_memory_mb": 2306.2626953125,
+              "time_seconds": 0.00571441650390625,
+              "tokens_per_second": 179195.89853137516
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 512,
+              "peak_memory_mb": 2503.7705078125,
+              "time_seconds": 0.005666255950927734,
+              "tokens_per_second": 361437.9614575444
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 512,
+              "peak_memory_mb": 2895.7861328125,
+              "time_seconds": 0.007524967193603516,
+              "tokens_per_second": 544321.3099296623
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 512,
+              "peak_memory_mb": 3680.3173828125,
+              "time_seconds": 0.009415626525878906,
+              "tokens_per_second": 870043.0053681758
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 512,
+              "peak_memory_mb": 5251.8798828125,
+              "time_seconds": 0.009550333023071289,
+              "tokens_per_second": 1715542.2706643033
+            }
+          ]
+        },
+        {
+          "seq_length": 1024,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 1024,
+              "peak_memory_mb": 4274.2666015625,
+              "time_seconds": 0.005767822265625,
+              "tokens_per_second": 177536.67724867724
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 1024,
+              "peak_memory_mb": 2503.2744140625,
+              "time_seconds": 0.005774736404418945,
+              "tokens_per_second": 354648.22228644567
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 1024,
+              "peak_memory_mb": 2896.2900390625,
+              "time_seconds": 0.008698701858520508,
+              "tokens_per_second": 470874.8577223517
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 1024,
+              "peak_memory_mb": 3680.8212890625,
+              "time_seconds": 0.011219978332519531,
+              "tokens_per_second": 730126.1871653209
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 1024,
+              "peak_memory_mb": 5252.3837890625,
+              "time_seconds": 0.010630369186401367,
+              "tokens_per_second": 1541244.6842353153
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 1024,
+              "peak_memory_mb": 8396.5087890625,
+              "time_seconds": 0.01171255111694336,
+              "tokens_per_second": 2797682.5605992754
+            }
+          ]
+        },
+        {
+          "seq_length": 2048,
+          "max_batch_size": 32,
+          "results": [
+            {
+              "batch_size": 1,
+              "seq_length": 2048,
+              "peak_memory_mb": 6480.7822265625,
+              "time_seconds": 0.006290435791015625,
+              "tokens_per_second": 325573.6276531231
+            },
+            {
+              "batch_size": 2,
+              "seq_length": 2048,
+              "peak_memory_mb": 2973.2978515625,
+              "time_seconds": 0.008536100387573242,
+              "tokens_per_second": 479844.40365332516
+            },
+            {
+              "batch_size": 4,
+              "seq_length": 2048,
+              "peak_memory_mb": 3833.8291015625,
+              "time_seconds": 0.00983119010925293,
+              "tokens_per_second": 833266.3603249666
+            },
+            {
+              "batch_size": 8,
+              "seq_length": 2048,
+              "peak_memory_mb": 5557.3916015625,
+              "time_seconds": 0.010596752166748047,
+              "tokens_per_second": 1546134.1118660846
+            },
+            {
+              "batch_size": 16,
+              "seq_length": 2048,
+              "peak_memory_mb": 9005.5166015625,
+              "time_seconds": 0.009570598602294922,
+              "tokens_per_second": 3423819.2783618155
+            },
+            {
+              "batch_size": 32,
+              "seq_length": 2048,
+              "peak_memory_mb": 15901.7666015625,
+              "time_seconds": 0.009599685668945312,
+              "tokens_per_second": 6826890.1982912775
+            }
+          ]
+        }
+      ],
+      "few_shot": {
+        "few_shot_accuracy": 0.2,
+        "correct": 4,
+        "total": 20
+      },
+      "generation": {
+        "avg_repetition_rate": 0.0050000000000000044,
+        "avg_diversity_score": 1.0,
+        "avg_coherence_score": 1.1628478834749972e-05
+      }
+    }
+  }
+}

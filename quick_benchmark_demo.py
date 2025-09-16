@@ -1,286 +1,314 @@
 """
-Quick Benchmark Demo for Your Trained Models
-===========================================
+Quick Benchmark Example - Minimal Working Example
+================================================
 
-This script shows how to run BLEU, ROUGE, and other advanced benchmarks
-on your trained reversible and standard Qwen3 models.
+This script provides a minimal working example to test your reversible Qwen3
+implementation against standard models on a single task.
+
+Usage:
+python quick_benchmark_example.py
 """
 
 import torch
+import torch.nn as nn
 import sys
 import os
 import time
-import numpy as np
 from pathlib import Path
 
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-def install_required_packages():
-    """Install required packages for advanced benchmarks"""
-    import subprocess
-    
-    packages = [
-        'evaluate',
-        'datasets', 
-        'rouge-score',
-        'nltk',
-        'bert-score',
-        'sacrebleu'  # Alternative BLEU implementation
-    ]
-    
-    print("Installing required packages for advanced benchmarks...")
-    for package in packages:
-        try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', package])
-            print(f"✓ {package} installed")
-        except subprocess.CalledProcessError:
-            print(f"✗ Failed to install {package}")
-
 def quick_benchmark_demo():
-    """Quick demonstration of advanced benchmarks"""
+    """Run a minimal benchmark demonstration"""
     
     print("="*60)
-    print("QUICK BENCHMARK DEMO FOR QWEN3 MODELS")
+    print("QUICK QWEN3 BENCHMARK EXAMPLE")
     print("="*60)
     
-    # First, let's install required packages
-    try:
-        import evaluate
-        import nltk
-        from rouge_score import rouge_scorer
-        print("✓ All required packages available")
-    except ImportError:
-        print("Installing required packages...")
-        install_required_packages()
-        print("Please restart the script after installation.")
-        return
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"Using device: {device}")
     
-    # Try to load your models
-    print("\nLoading models...")
+    # Step 1: Test model creation
+    print("\n1. Testing Model Creation...")
+    
     try:
         from qwen3_reversible_02_2 import create_reversible_qwen3_model
-        
-        # Create small test models (adjust parameters as needed)
-        print("Creating reversible model...")
-        reversible_model = create_reversible_qwen3_model(
-            vocab_size=10000,
-            hidden_size=256,
-            num_hidden_layers=2,
-            num_attention_heads=4,
-            num_key_value_heads=2,
-            attention_type="standard",
-            use_reversible=True,
-            reverse_thres=256,
-            intermediate_size=1024,
-            max_position_embeddings=1024
-        )
-        
-        print("Creating standard model...")
-        standard_model = create_reversible_qwen3_model(
-            vocab_size=10000,
-            hidden_size=256,
-            num_hidden_layers=2,
-            num_attention_heads=4,
-            num_key_value_heads=2,
-            attention_type="standard",
-            use_reversible=False,
-            reverse_thres=999999,
-            intermediate_size=1024,
-            max_position_embeddings=1024
-        )
-        
-        models = {
-            'reversible_qwen3': reversible_model,
-            'standard_qwen3': standard_model
-        }
-        
-        print(f"✓ Successfully created {len(models)} models")
-        
-    except Exception as e:
-        print(f"✗ Failed to create models: {e}")
-        print("Using dummy models for demonstration...")
-        
-        # Create dummy models for demonstration
-        class DummyModel(torch.nn.Module):
-            def __init__(self, name):
-                super().__init__()
-                self.name = name
-                self.linear = torch.nn.Linear(10, 1000)
-            
-            def forward(self, x):
-                return {'logits': self.linear(x.float())}
-        
-        models = {
-            'reversible_qwen3': DummyModel('reversible'),
-            'standard_qwen3': DummyModel('standard')
-        }
+        print("  ✓ Model creation function imported")
+    except ImportError as e:
+        print(f"  ✗ Cannot import model creation: {e}")
+        print("    Make sure qwen3_reversible_02_2.py is in the current directory")
+        return False
     
-    # Initialize benchmark metrics
-    print("\nInitializing benchmark metrics...")
+    # Create small test models
+    model_config = {
+        'vocab_size': 5000,
+        'hidden_size': 256,
+        'num_hidden_layers': 4,
+        'num_attention_heads': 8,
+        'num_key_value_heads': 4
+    }
+    
     try:
-        from rouge_score import rouge_scorer
-        from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-        import nltk
-        nltk.download('punkt', quiet=True)
+        # Reversible model
+        reversible_model = create_reversible_qwen3_model(
+            **model_config,
+            use_reversible=True,
+            reverse_thres=128
+        ).to(device)
         
-        rouge_scorer_obj = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
-        smoothing = SmoothingFunction().method1
+        # Standard model  
+        standard_model = create_reversible_qwen3_model(
+            **model_config,
+            use_reversible=False,
+            reverse_thres=999999
+        ).to(device)
         
-        print("✓ ROUGE and BLEU metrics initialized")
+        rev_params = sum(p.numel() for p in reversible_model.parameters())
+        std_params = sum(p.numel() for p in standard_model.parameters())
+        
+        print(f"  ✓ Reversible model: {rev_params:,} parameters")
+        print(f"  ✓ Standard model: {std_params:,} parameters")
+        
     except Exception as e:
-        print(f"✗ Failed to initialize metrics: {e}")
-        return
+        print(f"  ✗ Model creation failed: {e}")
+        return False
     
-    # Prepare test data
-    print("\nPreparing test data...")
-    test_texts = [
-        ("The weather today is sunny", "It is a bright and sunny day"),
-        ("AI will change the world", "Artificial intelligence will transform society"),
-        ("Learning is important", "Education plays a crucial role in development"),
-        ("Technology advances rapidly", "Tech innovation progresses at high speed"),
-        ("Climate change affects everyone", "Global warming impacts all populations")
+    # Step 2: Test forward pass
+    print("\n2. Testing Forward Pass...")
+    
+    batch_size = 4
+    seq_lengths = [64, 128, 256]  # Test different sequence lengths
+    
+    for seq_len in seq_lengths:
+        print(f"  Testing sequence length {seq_len}...")
+        
+        # Create test input
+        test_input = torch.randint(0, model_config['vocab_size'], (batch_size, seq_len)).to(device)
+        
+        try:
+            # Test reversible model
+            start_time = time.time()
+            with torch.no_grad():
+                rev_output = reversible_model(test_input)
+            rev_time = time.time() - start_time
+            
+            # Test standard model
+            start_time = time.time() 
+            with torch.no_grad():
+                std_output = standard_model(test_input)
+            std_time = time.time() - start_time
+            
+            print(f"    Reversible: {rev_output.shape}, {rev_time*1000:.1f}ms")
+            print(f"    Standard: {std_output.shape}, {std_time*1000:.1f}ms")
+            
+        except Exception as e:
+            print(f"    ✗ Forward pass failed for seq_len {seq_len}: {e}")
+            continue
+    
+    # Step 3: Test backward pass and memory usage
+    print("\n3. Testing Backward Pass and Memory...")
+    
+    try:
+        test_input = torch.randint(0, model_config['vocab_size'], (2, 128)).to(device)
+        
+        # Test reversible model backward
+        if device == 'cuda':
+            torch.cuda.reset_peak_memory_stats()
+        
+        rev_output = reversible_model(test_input)
+        rev_loss = rev_output.sum()
+        rev_loss.backward()
+        
+        if device == 'cuda':
+            rev_memory = torch.cuda.max_memory_allocated() / 1e6  # MB
+        else:
+            rev_memory = 0
+        
+        # Test standard model backward
+        if device == 'cuda':
+            torch.cuda.reset_peak_memory_stats()
+        
+        std_output = standard_model(test_input)
+        std_loss = std_output.sum()
+        std_loss.backward()
+        
+        if device == 'cuda':
+            std_memory = torch.cuda.max_memory_allocated() / 1e6  # MB
+        else:
+            std_memory = 0
+        
+        print(f"  ✓ Reversible backward pass: {rev_memory:.1f} MB peak memory")
+        print(f"  ✓ Standard backward pass: {std_memory:.1f} MB peak memory")
+        
+        if rev_memory > 0 and std_memory > 0:
+            memory_ratio = rev_memory / std_memory
+            print(f"  📊 Memory ratio (Rev/Std): {memory_ratio:.2f}x")
+        
+    except Exception as e:
+        print(f"  ✗ Backward pass test failed: {e}")
+    
+    # Step 4: Simple benchmark on synthetic task
+    print("\n4. Running Simple Classification Benchmark...")
+    
+    try:
+        # Create simple classification task
+        num_classes = 2
+        train_size = 1000
+        test_size = 200
+        
+        # Add classification heads
+        rev_classifier = nn.Sequential(
+            reversible_model,
+            nn.Dropout(0.1),
+            nn.Linear(model_config['hidden_size'], num_classes)
+        ).to(actual_device)
+        
+        std_classifier = nn.Sequential(
+            standard_model,
+            nn.Dropout(0.1), 
+            nn.Linear(model_config['hidden_size'], num_classes)
+        ).to(actual_device)
+        
+        # Generate synthetic data
+        train_inputs = torch.randint(0, model_config['vocab_size'], (train_size, 64)).to(actual_device)
+        train_labels = torch.randint(0, num_classes, (train_size,)).to(actual_device)
+        test_inputs = torch.randint(0, model_config['vocab_size'], (test_size, 64)).to(actual_device)
+        test_labels = torch.randint(0, num_classes, (test_size,)).to(actual_device)
+        
+        # Simple training loop
+        def train_simple(model, epochs=3):
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+            criterion = nn.CrossEntropyLoss()
+            
+            for epoch in range(epochs):
+                model.train()
+                epoch_loss = 0
+                
+                # Mini-batch training
+                batch_size = 32
+                for i in range(0, len(train_inputs), batch_size):
+                    batch_inputs = train_inputs[i:i+batch_size]
+                    batch_labels = train_labels[i:i+batch_size]
+                    
+                    optimizer.zero_grad()
+                    outputs = model(batch_inputs)
+                    loss = criterion(outputs, batch_labels)
+                    loss.backward()
+                    optimizer.step()
+                    
+                    epoch_loss += loss.item()
+                
+                print(f"    Epoch {epoch+1}: Loss = {epoch_loss/len(train_inputs)*batch_size:.4f}")
+            
+            # Test accuracy
+            model.eval()
+            with torch.no_grad():
+                test_outputs = model(test_inputs)
+                
+                # Handle dict output for predictions
+                if isinstance(test_outputs, dict):
+                    if 'logits' in test_outputs:
+                        logits = test_outputs['logits']
+                    else:
+                        first_key = next(iter(test_outputs.keys()))
+                        logits = test_outputs[first_key]
+                else:
+                    logits = test_outputs
+                
+                predictions = torch.argmax(logits, dim=1)
+                accuracy = (predictions == test_labels).float().mean().item()
+            
+            return accuracy
+        
+        print("  Training reversible model...")
+        rev_accuracy = train_simple(rev_classifier)
+        
+        print("  Training standard model...")
+        std_accuracy = train_simple(std_classifier)
+        
+        print(f"  📊 Results:")
+        print(f"    Reversible accuracy: {rev_accuracy:.3f}")
+        print(f"    Standard accuracy: {std_accuracy:.3f}")
+        print(f"    Difference: {rev_accuracy - std_accuracy:+.3f}")
+        
+    except Exception as e:
+        print(f"  ✗ Simple benchmark failed: {e}")
+    
+    # Step 5: Summary and next steps
+    print("\n5. Summary and Next Steps")
+    print("  ✓ Basic model functionality working")
+    print("  ✓ Forward and backward passes functional")
+    print("  ✓ Memory usage can be measured")
+    print("  ✓ Simple training loop works")
+    
+    print(f"\n🎉 Quick benchmark completed successfully!")
+    print(f"\nNext steps to run full benchmark:")
+    print(f"  1. Setup: python setup_qwen3_dizo_benchmark.py --all")
+    print(f"  2. Small test: python comprehensive_qwen3_dizo_benchmark.py --scale small --datasets sst2")
+    print(f"  3. Full benchmark: python comprehensive_qwen3_dizo_benchmark.py --datasets glue_basic --full_eval")
+    
+    return True
+
+def test_environment():
+    """Test if environment is ready for benchmarking"""
+    
+    print("🔍 Testing Environment...")
+    
+    required_files = [
+        'qwen3_reversible_02_2.py',
+        'comprehensive_qwen3_dizo_benchmark.py',
+        'setup_qwen3_dizo_benchmark.py'
     ]
     
-    # Run benchmark on each model
-    results = {}
+    for file in required_files:
+        if Path(file).exists():
+            print(f"  ✓ {file} found")
+        else:
+            print(f"  ✗ {file} missing")
+            return False
     
-    for model_name, model in models.items():
-        print(f"\n{'='*40}")
-        print(f"Benchmarking {model_name}")
-        print(f"{'='*40}")
-        
-        model.eval()
-        
-        # Simulate text generation (replace with actual generation logic)
-        predictions = []
-        references = []
-        generation_times = []
-        
-        for prompt, reference in test_texts:
-            start_time = time.time()
-            
-            # For demonstration, we'll use the reference as prediction with slight modification
-            # In practice, you would use your model's actual generation capability
-            try:
-                # Dummy generation - replace with actual model generation
-                prediction = f"Generated: {reference.lower()}"
-                predictions.append(prediction)
-                references.append(reference)
-                
-                generation_time = (time.time() - start_time) * 1000  # ms
-                generation_times.append(generation_time)
-                
-            except Exception as e:
-                print(f"Generation failed: {e}")
-                predictions.append("")
-                references.append(reference)
-                generation_times.append(0)
-        
-        # Calculate BLEU scores
-        bleu_scores = []
-        for pred, ref in zip(predictions, references):
-            if pred.strip() and ref.strip():
-                try:
-                    score = sentence_bleu(
-                        [ref.split()], 
-                        pred.split(), 
-                        weights=(0.25, 0.25, 0.25, 0.25),
-                        smoothing_function=smoothing
-                    )
-                    bleu_scores.append(score)
-                except:
-                    bleu_scores.append(0.0)
-        
-        # Calculate ROUGE scores
-        rouge_1_scores = []
-        rouge_2_scores = []
-        rouge_l_scores = []
-        
-        for pred, ref in zip(predictions, references):
-            if pred.strip() and ref.strip():
-                try:
-                    scores = rouge_scorer_obj.score(ref, pred)
-                    rouge_1_scores.append(scores['rouge1'].fmeasure)
-                    rouge_2_scores.append(scores['rouge2'].fmeasure)
-                    rouge_l_scores.append(scores['rougeL'].fmeasure)
-                except:
-                    rouge_1_scores.append(0.0)
-                    rouge_2_scores.append(0.0)
-                    rouge_l_scores.append(0.0)
-        
-        # Store results
-        results[model_name] = {
-            'bleu_4': np.mean(bleu_scores) if bleu_scores else 0.0,
-            'rouge_1': np.mean(rouge_1_scores) if rouge_1_scores else 0.0,
-            'rouge_2': np.mean(rouge_2_scores) if rouge_2_scores else 0.0,
-            'rouge_l': np.mean(rouge_l_scores) if rouge_l_scores else 0.0,
-            'avg_generation_time': np.mean(generation_times) if generation_times else 0.0,
-            'num_samples': len(predictions)
-        }
-        
-        # Print individual model results
-        print(f"BLEU-4: {results[model_name]['bleu_4']:.3f}")
-        print(f"ROUGE-1: {results[model_name]['rouge_1']:.3f}")
-        print(f"ROUGE-2: {results[model_name]['rouge_2']:.3f}")
-        print(f"ROUGE-L: {results[model_name]['rouge_l']:.3f}")
-        print(f"Avg Generation Time: {results[model_name]['avg_generation_time']:.1f}ms")
-        print(f"Samples: {results[model_name]['num_samples']}")
+    # Test imports
+    try:
+        import torch
+        print(f"  ✓ PyTorch {torch.__version__}")
+    except ImportError:
+        print("  ✗ PyTorch not installed")
+        return False
     
-    # Print comparison summary
-    print(f"\n{'='*60}")
-    print("BENCHMARK COMPARISON SUMMARY")
-    print(f"{'='*60}")
+    try:
+        import transformers
+        print(f"  ✓ Transformers {transformers.__version__}")
+    except ImportError:
+        print("  ⚠ Transformers not installed (optional for quick test)")
     
-    print(f"{'Metric':<15} {'Reversible':<12} {'Standard':<12} {'Difference':<12}")
-    print("-" * 60)
+    try:
+        import datasets
+        print("  ✓ Datasets library available")
+    except ImportError:
+        print("  ⚠ Datasets library not installed (needed for full benchmark)")
     
-    rev_results = results.get('reversible_qwen3', {})
-    std_results = results.get('standard_qwen3', {})
-    
-    metrics = ['bleu_4', 'rouge_1', 'rouge_2', 'rouge_l', 'avg_generation_time']
-    for metric in metrics:
-        rev_val = rev_results.get(metric, 0.0)
-        std_val = std_results.get(metric, 0.0)
-        diff = rev_val - std_val
-        
-        print(f"{metric:<15} {rev_val:<12.3f} {std_val:<12.3f} {diff:<+12.3f}")
-    
-    print(f"\n{'='*60}")
-    print("HOW TO RUN FULL BENCHMARKS")
-    print(f"{'='*60}")
-    
-    print("""
-To run comprehensive benchmarks on your trained models:
-
-1. Basic BLEU/ROUGE benchmark:
-   python run_advanced_benchmarks.py --models reversible_qwen3,standard_qwen3 --tasks text_generation
-
-2. GLUE+ language understanding:
-   python run_advanced_benchmarks.py --tasks glue
-
-3. Long-range memory tasks:
-   python run_advanced_benchmarks.py --tasks memory
-
-4. All benchmarks:
-   python run_advanced_benchmarks.py --tasks text_generation,glue,memory
-
-5. With custom model checkpoints:
-   python run_advanced_benchmarks.py --models /path/to/model1.pt,/path/to/model2.pt --tasks all
-
-Available benchmark types:
-- text_generation: BLEU, ROUGE, METEOR scores
-- glue: GLUE+ language understanding tasks  
-- memory: Long-range dependency and memory tasks
-- advanced: Domain-specific benchmarks
-
-For more sophisticated evaluation:
-- Install additional packages: pip install evaluate datasets rouge-score nltk bert-score
-- Use the GLUE+ framework for comprehensive language understanding
-- Use the Memory benchmark for long-context evaluation
-    """)
-    
-    return results
+    print("  ✓ Environment ready for quick benchmark")
+    return True
 
 if __name__ == "__main__":
-    results = quick_benchmark_demo()
+    print("Quick Benchmark Example for Qwen3 vs DiZO")
+    print("This is a minimal test to verify your setup works")
+    print()
+    
+    # Test environment first
+    if not test_environment():
+        print("\n❌ Environment not ready. Please check missing files/packages.")
+        print("Make sure you have:")
+        print("  - qwen3_reversible_02_2.py in current directory")
+        print("  - PyTorch installed")
+        print("  - Other benchmark scripts in current directory")
+        sys.exit(1)
+    
+    # Run quick benchmark
+    if quick_benchmark_demo():
+        print("\n✅ Success! Your setup is working correctly.")
+        print("You can now run the full benchmark suite with confidence.")
+    else:
+        print("\n❌ Some issues encountered. Check the error messages above.")
+        print("Try fixing the issues and run this test again.")

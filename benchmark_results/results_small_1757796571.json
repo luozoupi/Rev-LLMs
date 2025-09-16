@@ -1,0 +1,70 @@
+{
+  "task_specific": {
+    "sst2": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {},
+      "dizo_opt": {}
+    },
+    "mrpc": {
+      "reversible_qwen3": {},
+      "standard_qwen3": {},
+      "dizo_opt": {}
+    }
+  },
+  "glue_plus": {
+    "reversible_qwen3": {
+      "sst2": {
+        "score": 0.5,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.5490196078431373,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.5245098039215687,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    },
+    "standard_qwen3": {
+      "sst2": {
+        "score": 0.5126146788990825,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.46568627450980393,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.4891504767044432,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    },
+    "dizo_opt": {
+      "sst2": {
+        "score": 0.4988532110091743,
+        "inference_time": 0.1,
+        "predictions": 872
+      },
+      "mrpc": {
+        "score": 0.5416666666666666,
+        "inference_time": 0.1,
+        "predictions": 408
+      },
+      "overall_score": 0.5202599388379204,
+      "tasks_completed": 2,
+      "total_tasks": 2
+    }
+  },
+  "memory": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "advanced": {
+    "disabled": "Device compatibility issues with Qwen3 model internals"
+  },
+  "comprehensive": {
+    "skipped": "No suitable method available"
+  }
+}

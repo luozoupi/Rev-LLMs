@@ -23,7 +23,8 @@ from tqdm import tqdm
 from datasets import load_dataset
 from tokenizers import Tokenizer, models, pre_tokenizers, trainers
 
-def load_wikitext_data(subset="wikitext-103-raw-v1"):
+# def load_wikitext_data(subset="wikitext-103-raw-v1"):
+def load_wikitext_data(subset="wikitext-2-raw-v1"):
     """Load WikiText dataset instead of synthetic data"""
     print("Loading WikiText dataset...")
     dataset = load_dataset("wikitext", subset)
@@ -31,35 +32,67 @@ def load_wikitext_data(subset="wikitext-103-raw-v1"):
     return dataset
 
 def create_wikitext_tokenizer(dataset, vocab_size=32000):
-    """Create tokenizer from WikiText data"""
+    """Create tokenizer from WikiText data - Enhanced for WikiText-2"""
     print("Creating WikiText tokenizer...")
     
     from tokenizers import Tokenizer
-    from tokenizers.models import WordLevel
+    from tokenizers.models import BPE
     from tokenizers.pre_tokenizers import Whitespace
-    from tokenizers.trainers import WordLevelTrainer
+    from tokenizers.trainers import BpeTrainer
+    try:
+        from tokenizers.processors import TemplateProcessing
+    except ImportError:
+        TemplateProcessing = None
     
-    tokenizer = Tokenizer(WordLevel(unk_token="<unk>"))
+    # Use BPE instead of WordLevel for better subword handling
+    tokenizer = Tokenizer(BPE(unk_token="<unk>"))
     tokenizer.pre_tokenizer = Whitespace()
     
-    trainer = WordLevelTrainer(
+    trainer = BpeTrainer(
         vocab_size=vocab_size,
-        special_tokens=["<unk>", "<pad>", "<bos>", "<eos>"]
+        special_tokens=["<unk>", "<pad>", "<bos>", "<eos>"],
+        min_frequency=2  # Lower frequency threshold for smaller datasets
     )
     
     def batch_iterator():
         texts_yielded = 0
-        for i in range(0, len(dataset["train"]["text"]), 1000):
-            batch_texts = []
-            for text in dataset["train"]["text"][i:i+1000]:
-                if text and text.strip() and len(text.strip()) > 10:
-                    batch_texts.append(text.strip())
-            if batch_texts:
-                yield batch_texts
-                texts_yielded += len(batch_texts)
+        all_texts = []
+        
+        # Collect all valid texts first
+        for text in dataset["train"]["text"]:
+            if text and text.strip() and len(text.strip()) > 5:  # Lower threshold
+                clean_text = text.strip().replace('\n', ' ').replace('\t', ' ')
+                # Remove multiple spaces
+                clean_text = ' '.join(clean_text.split())
+                if len(clean_text) > 10:
+                    all_texts.append(clean_text)
+        
+        print(f"Found {len(all_texts)} valid texts for tokenizer training")
+        
+        # Yield in batches
+        for i in range(0, len(all_texts), 1000):
+            batch = all_texts[i:i+1000]
+            if batch:
+                yield batch
+                texts_yielded += len(batch)
+        
         print(f"Used {texts_yielded} texts for tokenizer training")
     
     tokenizer.train_from_iterator(batch_iterator(), trainer=trainer)
+    
+    # Add post-processor for proper token handling (if available)
+    if TemplateProcessing is not None:
+        try:
+            tokenizer.post_processor = TemplateProcessing(
+                single="<bos> $A <eos>",
+                special_tokens=[
+                    ("<bos>", tokenizer.token_to_id("<bos>")),
+                    ("<eos>", tokenizer.token_to_id("<eos>")),
+                ],
+            )
+        except Exception as e:
+            print(f"Warning: Could not set post-processor: {e}")
+    
     return tokenizer
 
 class WikiTextDataset(torch.utils.data.Dataset):
@@ -83,19 +116,31 @@ class WikiTextDataset(torch.utils.data.Dataset):
         print(f"Processing {len(valid_texts)} valid texts from {len(dataset_split['text'])} total texts...")
         
         for text in tqdm(valid_texts, desc="Processing WikiText"):
-            clean_text = text.strip().replace('\n', ' ')
-            if len(clean_text) < 50:
+            clean_text = text.strip().replace('\n', ' ').replace('\t', ' ')
+            # Remove multiple spaces
+            clean_text = ' '.join(clean_text.split())
+            
+            if len(clean_text) < 30:  # More lenient minimum length
                 continue
                 
             tokens = tokenizer.encode(clean_text).ids
             
-            if len(tokens) < seq_length + 1:
+            # More flexible sequence length requirements
+            min_seq_len = min(seq_length // 2, 128)  # Allow shorter sequences
+            if len(tokens) < min_seq_len:
                 continue
             
-            for start_idx in range(0, len(tokens) - seq_length, stride):
-                sequence = tokens[start_idx:start_idx + seq_length + 1]
-                if len(sequence) == seq_length + 1:
-                    self.examples.append(sequence)
+            # Create sequences, handling cases where text is shorter than seq_length
+            if len(tokens) >= seq_length + 1:
+                # Normal case: create sliding windows
+                for start_idx in range(0, len(tokens) - seq_length, stride):
+                    sequence = tokens[start_idx:start_idx + seq_length + 1]
+                    if len(sequence) == seq_length + 1:
+                        self.examples.append(sequence)
+            else:
+                # Short text case: pad to required length
+                padded_tokens = tokens + [self.pad_id] * (seq_length + 1 - len(tokens))
+                self.examples.append(padded_tokens)
         
         print(f"Created WikiText dataset with {len(self.examples)} sequences")
         
@@ -113,7 +158,7 @@ class WikiTextDataset(torch.utils.data.Dataset):
         
         y = torch.where(y == self.pad_id, torch.tensor(-100, dtype=torch.long), y)
         
-        return x, y
+        return {"input_ids": x, "labels": y}
 
 @dataclass
 class EnhancedPerformanceMetrics:
@@ -327,9 +372,16 @@ class ReversibleQwenPerformanceTester:
         with torch.no_grad():
             overall_start = time.time()
             
-            for batch_idx, (inputs, targets) in enumerate(dataloader):
+            for batch_idx, batch in enumerate(dataloader):
                 if batch_idx >= max_batches:
                     break
+                
+                # Handle both dict and tuple formats
+                if isinstance(batch, dict):
+                    inputs = batch["input_ids"]
+                    targets = batch["labels"]
+                else:
+                    inputs, targets = batch
                     
                 inputs = inputs.to(self.device)
                 batch_start = time.time()
@@ -371,9 +423,16 @@ class ReversibleQwenPerformanceTester:
         criterion_sum = nn.CrossEntropyLoss(ignore_index=-100, reduction='sum')
         
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(dataloader):
+            for batch_idx, batch in enumerate(dataloader):
                 if batch_idx >= max_batches:
                     break
+                
+                # Handle both dict and tuple formats
+                if isinstance(batch, dict):
+                    inputs = batch["input_ids"]
+                    targets = batch["labels"]
+                else:
+                    inputs, targets = batch
                     
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 
@@ -592,7 +651,14 @@ class ReversibleQwenPerformanceTester:
             
             optimizer.zero_grad()
             
-            for batch_idx, (inputs, targets) in enumerate(train_loader):
+            for batch_idx, batch in enumerate(train_loader):
+                # Handle both dict and tuple formats
+                if isinstance(batch, dict):
+                    inputs = batch["input_ids"]
+                    targets = batch["labels"]
+                else:
+                    inputs, targets = batch
+                    
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 
@@ -688,7 +754,14 @@ class ReversibleQwenPerformanceTester:
             print(f"Starting validation with {len(val_loader)} batches...")
             
             with torch.no_grad():
-                for val_batch_idx, (inputs, targets) in enumerate(val_loader):
+                for val_batch_idx, batch in enumerate(val_loader):
+                    # Handle both dict and tuple formats
+                    if isinstance(batch, dict):
+                        inputs = batch["input_ids"]
+                        targets = batch["labels"]
+                    else:
+                        inputs, targets = batch
+                        
                     inputs = inputs.to(self.device)
                     targets = targets.to(self.device)
                     
@@ -785,9 +858,16 @@ class ReversibleQwenPerformanceTester:
         print(f"Calculating perplexity with up to {max_batches} batches...")
         
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(dataloader):
+            for batch_idx, batch in enumerate(dataloader):
                 if batch_idx >= max_batches:
                     break
+                
+                # Handle both dict and tuple formats
+                if isinstance(batch, dict):
+                    inputs = batch["input_ids"]
+                    targets = batch["labels"]
+                else:
+                    inputs, targets = batch
                     
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 
@@ -835,7 +915,14 @@ class ReversibleQwenPerformanceTester:
         print(f"Dataset length: {len(dataset)}")
         
         if len(dataset) > 0:
-            sample_x, sample_y = dataset[0]
+            sample = dataset[0]
+            # Handle both dict and tuple formats
+            if isinstance(sample, dict):
+                sample_x = sample["input_ids"]
+                sample_y = sample["labels"]
+            else:
+                sample_x, sample_y = sample
+                
             print(f"Sample input shape: {sample_x.shape}")
             print(f"Sample target shape: {sample_y.shape}")
             print(f"Sample input tokens (first 10): {sample_x[:10].tolist()}")
@@ -856,15 +943,40 @@ class ReversibleQwenPerformanceTester:
         
         if use_wikitext:
             try:
+                print("Loading WikiText-2 dataset...")
                 dataset = load_wikitext_data()
-                tokenizer = create_wikitext_tokenizer(dataset, vocab_size)
+                print(f"Dataset loaded: Train={len(dataset['train'])}, Val={len(dataset['validation'])}, Test={len(dataset['test'])}")
+                
+                # Debug: Check sample texts
+                train_texts = dataset['train']['text']
+                empty_count = sum(1 for text in train_texts if not text or not text.strip())
+                short_count = sum(1 for text in train_texts if text and text.strip() and len(text.strip()) < 20)
+                valid_count = sum(1 for text in train_texts if text and text.strip() and len(text.strip()) >= 20)
+                
+                print(f"Text analysis - Empty: {empty_count}, Short (<20 chars): {short_count}, Valid (>=20 chars): {valid_count}")
+                
+                # Create tokenizer with smaller vocab for testing
+                print("Creating tokenizer...")
+                tokenizer = create_wikitext_tokenizer(dataset, min(vocab_size, 5000))  # Limit vocab size for testing
                 actual_vocab_size = tokenizer.get_vocab_size()
                 print(f"Actual vocabulary size: {actual_vocab_size}")
                 
+                # Test tokenization on a sample
+                valid_texts = [text for text in train_texts if text and text.strip() and len(text.strip()) >= 20]
+                if valid_texts:
+                    sample_text = valid_texts[0][:200]  # First 200 chars
+                    encoded = tokenizer.encode(sample_text)
+                    print(f"Sample tokenization test:")
+                    print(f"  Text length: {len(sample_text)} chars")
+                    print(f"  Token count: {len(encoded.ids)}")
+                    print(f"  First 10 tokens: {encoded.tokens[:10] if hasattr(encoded, 'tokens') else 'N/A'}")
+                
                 print("Creating WikiText datasets...")
-                train_dataset = WikiTextDataset(dataset['train'], tokenizer, seq_len, stride=seq_len//4)
-                val_dataset = WikiTextDataset(dataset['validation'], tokenizer, seq_len, stride=seq_len//4) 
-                test_dataset = WikiTextDataset(dataset['test'], tokenizer, seq_len, stride=seq_len//4)
+                # Use smaller sequence length for testing
+                test_seq_len = min(seq_len, 256)  # Smaller for testing
+                train_dataset = WikiTextDataset(dataset['train'], tokenizer, test_seq_len, stride=test_seq_len//4)
+                val_dataset = WikiTextDataset(dataset['validation'], tokenizer, test_seq_len, stride=test_seq_len//4) 
+                test_dataset = WikiTextDataset(dataset['test'], tokenizer, test_seq_len, stride=test_seq_len//4)
                 
                 self.debug_dataset(train_dataset, "train")
                 self.debug_dataset(val_dataset, "validation")
@@ -875,9 +987,12 @@ class ReversibleQwenPerformanceTester:
                 test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False, drop_last=False)
                 
                 vocab_size = actual_vocab_size
+                seq_len = test_seq_len  # Update seq_len to what we actually used
                 
             except Exception as e:
                 print(f"WikiText loading failed: {e}")
+                import traceback
+                traceback.print_exc()
                 print("Falling back to synthetic data...")
                 use_wikitext = False
         

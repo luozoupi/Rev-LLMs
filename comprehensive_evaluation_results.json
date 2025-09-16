@@ -1,0 +1,386 @@
+{
+  "basic_performance": {
+    "reversible_standard": {
+      "enhanced_metrics": {
+        "model_name": "reversible_standard",
+        "perplexity": 1.027483344078064,
+        "loss": 0.02711250563662728,
+        "token_accuracy": 0.996875751021389,
+        "bits_per_byte": 0.03911507742803624,
+        "memory_peak_mb": 10880.498046875,
+        "memory_reserved_mb": 12020.0,
+        "memory_efficiency_ratio": 2.048931778271814,
+        "throughput_tokens_per_sec": 16861.97376500315,
+        "time_per_token_ms": 0.059305038303136826,
+        "estimated_flops_per_token": 2841010176,
+        "training_time_per_epoch": 512.4060199558735,
+        "gradient_norm": 0.14786482566576137,
+        "convergence_rate": 0.03961821825297562,
+        "training_stability": 93.41689743433832,
+        "overfitting_gap": 0.02319106721420977,
+        "epochs_to_converge": 8,
+        "memory_scaling_slope": 0.16336495535713946,
+        "attention_sparsity": null,
+        "pruning_ratio": null,
+        "reversible_layers_used": null
+      },
+      "baseline_perplexity": 6656.2548828125,
+      "improvement": 6655.227399468422,
+      "memory_scaling_data": [
+        {
+          "seq_length": 128,
+          "peak_memory_mb": 3644.5341796875,
+          "memory_per_token": 28.472923278808594
+        },
+        {
+          "seq_length": 256,
+          "peak_memory_mb": 3668.1025390625,
+          "memory_per_token": 14.32852554321289
+        },
+        {
+          "seq_length": 512,
+          "peak_memory_mb": 3707.7978515625,
+          "memory_per_token": 7.241792678833008
+        }
+      ],
+      "training_curves": {
+        "train_losses": [
+          0.3170623830853374,
+          0.016711043965058767,
+          0.009704441882969142,
+          0.0036898539577232287,
+          0.001475202304376227,
+          0.0006190836207564237,
+          0.0002578824843271671,
+          0.00011663706153244014
+        ],
+        "val_losses": [
+          0.0247906509794766,
+          0.02081898928760016,
+          0.021961030865142308,
+          0.021546715561083056,
+          0.022530896215474692,
+          0.021972221246605222,
+          0.022760798552302328,
+          0.023307704275742212
+        ],
+        "epoch_times": [
+          547.7624990940094,
+          532.2136514186859,
+          499.7724599838257,
+          496.4996688365936,
+          511.7583386898041,
+          498.7020466327667,
+          504.67367696762085,
+          507.86581802368164
+        ],
+        "gradient_norms": [
+          0.7188443653324716,
+          0.15878568850730762,
+          0.12706301474124473,
+          0.08276529232001534,
+          0.046514428183935315,
+          0.027190962731354622,
+          0.01486106553323601,
+          0.006893787976525646
+        ],
+        "token_accuracies": [
+          0.9963725013534156,
+          0.9971724820435369,
+          0.9971138627688297,
+          0.9973207543266197,
+          0.9973621326381777,
+          0.9973897181792164,
+          0.9974069591423655,
+          0.9974104073349953
+        ]
+      }
+    },
+    "non_reversible_standard": {
+      "enhanced_metrics": {
+        "model_name": "non_reversible_standard",
+        "perplexity": 1.023439884185791,
+        "loss": 0.0231693688270539,
+        "token_accuracy": 0.9971160778658976,
+        "bits_per_byte": 0.033426333507317996,
+        "memory_peak_mb": 12689.82958984375,
+        "memory_reserved_mb": 13958.0,
+        "memory_efficiency_ratio": 3.043395493983616,
+        "throughput_tokens_per_sec": 16207.22804856696,
+        "time_per_token_ms": 0.061700865626335144,
+        "estimated_flops_per_token": 2841010176,
+        "training_time_per_epoch": 501.5684514939785,
+        "gradient_norm": 0.18930045249663607,
+        "convergence_rate": 0.04240794189892764,
+        "training_stability": 81.9499702755162,
+        "overfitting_gap": 0.0223048766460604,
+        "epochs_to_converge": 8,
+        "memory_scaling_slope": 0.12765066964285612,
+        "attention_sparsity": null,
+        "pruning_ratio": null,
+        "reversible_layers_used": null
+      },
+      "baseline_perplexity": 6776.00634765625,
+      "improvement": 6774.982907772064,
+      "memory_scaling_data": [
+        {
+          "seq_length": 128,
+          "peak_memory_mb": 5454.7998046875,
+          "memory_per_token": 42.615623474121094
+        },
+        {
+          "seq_length": 256,
+          "peak_memory_mb": 5472.3681640625,
+          "memory_per_token": 21.37643814086914
+        },
+        {
+          "seq_length": 512,
+          "peak_memory_mb": 5504.0634765625,
+          "memory_per_token": 10.750123977661133
+        }
+      ],
+      "training_curves": {
+        "train_losses": [
+          0.33992185960990423,
+          0.018769275758256,
+          0.01407485886351769,
+          0.007808317227871074,
+          0.0025665265565115248,
+          0.0010012985530865178,
+          0.000384617525630538,
+          0.0006583244184831137
+        ],
+        "val_losses": [
+          0.022174139339014434,
+          0.02157738091864841,
+          0.02023781643555804,
+          0.021456763613264096,
+          0.021435656450144294,
+          0.021964521522463844,
+          0.02180332524348578,
+          0.022963201064543515
+        ],
+        "epoch_times": [
+          506.44753098487854,
+          491.7474527359009,
+          493.54364466667175,
+          511.59280347824097,
+          520.1728508472443,
+          499.0517325401306,
+          493.20604729652405,
+          496.78554940223694
+        ],
+        "gradient_norms": [
+          0.8861339987046961,
+          0.19767826978428835,
+          0.12564035492693598,
+          0.1329373765493134,
+          0.06956084967941865,
+          0.040772353651525484,
+          0.020800003349518228,
+          0.040880413327392486
+        ],
+        "token_accuracies": [
+          0.9968242145879237,
+          0.9971586892730175,
+          0.9972242049329844,
+          0.9972862724003214,
+          0.997396614564476,
+          0.9974069591423655,
+          0.9974379928760341,
+          0.9973242025192496
+        ]
+      }
+    }
+  },
+  "scaling_analysis": {
+    "Small": {
+      "reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 221157.5094230809,
+          "time_per_token_ms": 0.00452166423201561,
+          "estimated_flops_per_token": 52907520
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 87.90234375,
+              "memory_per_token": 0.686737060546875
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 95.9658203125,
+              "memory_per_token": 0.3748664855957031
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 108.7216796875,
+              "memory_per_token": 0.21234703063964844
+            }
+          ],
+          "memory_scaling_slope": 0.05358995710100444
+        },
+        "parameters": 8817920,
+        "model_size": "Small"
+      },
+      "non_reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 239592.95641550588,
+          "time_per_token_ms": 0.004173745401203632,
+          "estimated_flops_per_token": 52907520
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 87.90234375,
+              "memory_per_token": 0.686737060546875
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 95.9658203125,
+              "memory_per_token": 0.3748664855957031
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 108.2802734375,
+              "memory_per_token": 0.2114849090576172
+            }
+          ],
+          "memory_scaling_slope": 0.052358354840959784
+        },
+        "parameters": 8817920,
+        "model_size": "Small"
+      }
+    },
+    "Medium": {
+      "reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 117812.68041661294,
+          "time_per_token_ms": 0.008488050661981106,
+          "estimated_flops_per_token": 219070464
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 302.3779296875,
+              "memory_per_token": 2.3623275756835938
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 314.1611328125,
+              "memory_per_token": 1.2271919250488281
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 337.7587890625,
+              "memory_per_token": 0.6596851348876953
+            }
+          ],
+          "memory_scaling_slope": 0.0921434674944196
+        },
+        "parameters": 36511744,
+        "model_size": "Medium"
+      },
+      "non_reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 121975.5733463593,
+          "time_per_token_ms": 0.008198362775146961,
+          "estimated_flops_per_token": 219070464
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 300.908203125,
+              "memory_per_token": 2.3508453369140625
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 311.1611328125,
+              "memory_per_token": 1.2154731750488281
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 333.7587890625,
+              "memory_per_token": 0.6518726348876953
+            }
+          ],
+          "memory_scaling_slope": 0.08593749999999978
+        },
+        "parameters": 36511744,
+        "model_size": "Medium"
+      }
+    },
+    "Large": {
+      "reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 53814.092458201354,
+          "time_per_token_ms": 0.01858249306678772,
+          "estimated_flops_per_token": 583426560
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 769.4931640625,
+              "memory_per_token": 6.011665344238281
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 788.4013671875,
+              "memory_per_token": 3.079692840576172
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 819.9990234375,
+              "memory_per_token": 1.6015605926513672
+            }
+          ],
+          "memory_scaling_slope": 0.13036891392299135
+        },
+        "parameters": 97237760,
+        "model_size": "Large"
+      },
+      "non_reversible_standard": {
+        "computational": {
+          "throughput_tokens_per_sec": 54446.759613507464,
+          "time_per_token_ms": 0.01836656592786312,
+          "estimated_flops_per_token": 583426560
+        },
+        "memory_scaling": {
+          "memory_scaling_data": [
+            {
+              "seq_length": 128,
+              "peak_memory_mb": 767.2431640625,
+              "memory_per_token": 5.994087219238281
+            },
+            {
+              "seq_length": 256,
+              "peak_memory_mb": 782.9013671875,
+              "memory_per_token": 3.058208465576172
+            },
+            {
+              "seq_length": 512,
+              "peak_memory_mb": 813.9990234375,
+              "memory_per_token": 1.5898418426513672
+            }
+          ],
+          "memory_scaling_slope": 0.12171936035156218
+        },
+        "parameters": 97237760,
+        "model_size": "Large"
+      }
+    }
+  },
+  "benchmark_summary": {
+    "total_phases": 5,
+    "models_tested": [
+      "reversible_standard",
+      "non_reversible_standard"
+    ],
+    "benchmarks_completed": []
+  }
+}

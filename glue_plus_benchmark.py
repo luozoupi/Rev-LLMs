@@ -398,9 +398,54 @@ class GLUEPlusBenchmark:
     """Comprehensive GLUE+ benchmark runner"""
     
     def __init__(self, tokenizer_name='bert-base-uncased'):
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        try:
+            if "qwen" in tokenizer_name.lower():
+                # Handle Qwen specifically or fall back to BERT
+                try:
+                    self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, trust_remote_code=True)
+                    # Handle Qwen's special tokenizer format
+                    if self.tokenizer.pad_token is None:
+                        vocab = self.tokenizer.get_vocab()
+                        if vocab and b'!' in vocab:
+                            self.tokenizer.pad_token = '!'
+                            self.tokenizer.pad_token_id = vocab[b'!']
+                        else:
+                            raise ValueError("Cannot configure Qwen tokenizer padding")
+                    print(f"Using Qwen tokenizer with pad_token: {repr(self.tokenizer.pad_token)}")
+                except Exception as qwen_error:
+                    print(f"Qwen tokenizer failed: {qwen_error}, falling back to BERT")
+                    self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, trust_remote_code=True)
+        except:
+            # Fallback to a standard tokenizer if the requested one fails
+            print(f"Failed to load {tokenizer_name}, falling back to bert-base-uncased")
+            self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+            
+        # Ensure pad_token is set for any tokenizer
         if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+            if hasattr(self.tokenizer, 'eos_token') and self.tokenizer.eos_token is not None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+            elif hasattr(self.tokenizer, 'unk_token') and self.tokenizer.unk_token is not None:
+                self.tokenizer.pad_token = self.tokenizer.unk_token
+            else:
+                try:
+                    self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+                except:
+                    # Last resort
+                    self.tokenizer.pad_token = '[PAD]'
+                    self.tokenizer.pad_token_id = 0
+        
+        # Ensure pad_token_id is set
+        if self.tokenizer.pad_token_id is None:
+            if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
+                self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            elif hasattr(self.tokenizer, 'unk_token_id') and self.tokenizer.unk_token_id is not None:
+                self.tokenizer.pad_token_id = self.tokenizer.unk_token_id
+            else:
+                self.tokenizer.pad_token_id = 0
+        
+        print(f"GLUEPlusBenchmark tokenizer configured with pad_token: {repr(self.tokenizer.pad_token)}, pad_token_id: {self.tokenizer.pad_token_id}")
         
         self.results = {}
     
